@@ -1,7 +1,8 @@
 .idea/
 out/
-target/
+*.iml
 *.class
 *.log
+target/
 .DS_Store
 Thumbs.db
