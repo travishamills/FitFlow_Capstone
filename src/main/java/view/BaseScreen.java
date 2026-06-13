@@ -1,7 +1,7 @@
 /*
  * File: BaseScreen.java
- * Version: 0.4.2
- * Date last edited: 6/7/2026
+ * Version: 0.5.1
+ * Date last edited: 6/13/2026
  * Author: Alex Ronn
  * File Purpose: Abstract class that provides methods to set up the consistent interfaces.
  */
@@ -14,12 +14,14 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 
 public abstract class BaseScreen {
 
     protected AppStateManager stateManager;
     protected VBox navigationMenu;
+    protected Label messageLabel;
 
     public BaseScreen(AppStateManager stateManager) {
         this.stateManager = stateManager;
@@ -185,6 +187,9 @@ public abstract class BaseScreen {
         	    -fx-border-width: 1;
         	    """);
 
+        Button dashboardButton =
+                new Button("Dashboard");
+        
         Button profileButton =
                 new Button("Profile");
 
@@ -202,6 +207,7 @@ public abstract class BaseScreen {
         
         // Style buttons
 
+        styleNavigationButton(dashboardButton);
         styleNavigationButton(profileButton);
         styleNavigationButton(builderButton);
         styleNavigationButton(historyButton);
@@ -212,6 +218,9 @@ public abstract class BaseScreen {
 
         profileButton.setOnAction(event ->
                 stateManager.showProfileScreen());
+        
+        dashboardButton.setOnAction(event ->
+        		stateManager.showDashboardScreen());
 
         /*
         builderButton.setOnAction(event ->
@@ -234,6 +243,7 @@ public abstract class BaseScreen {
         // Assemble
 
         menu.getChildren().addAll(
+        		dashboardButton,
                 profileButton,
                 builderButton,
                 historyButton,
@@ -264,5 +274,71 @@ public abstract class BaseScreen {
             -fx-padding: 8 15 8 15;
             -fx-cursor: hand;
             """);
+    }
+    
+    // Creates a notification label
+    protected Label createNotificationLabel() {
+
+        Label label = new Label();
+
+        label.setVisible(false);
+
+        label.setWrapText(true);
+
+        label.setStyle("""
+            -fx-font-family: "Segoe UI";
+            -fx-font-size: 13;
+            -fx-font-weight: bold;
+            """);
+
+        messageLabel = label;
+        return label;
+    }
+    
+    protected void showError(String message) {
+
+        if (messageLabel == null) {
+            return;
+        }
+
+        messageLabel.setText(message);
+
+        messageLabel.setStyle("""
+            -fx-text-fill: #F44336;
+            -fx-font-family: "Segoe UI";
+            -fx-font-size: 13;
+            -fx-font-weight: bold;
+            """);
+
+        messageLabel.setVisible(true);
+    }
+    
+    protected void showSuccess(String message) {
+
+        if (messageLabel == null) {
+            return;
+        }
+
+        messageLabel.setText(message);
+
+        messageLabel.setStyle("""
+            -fx-text-fill: #4CAF50;
+            -fx-font-family: "Segoe UI";
+            -fx-font-size: 13;
+            -fx-font-weight: bold;
+            """);
+
+        messageLabel.setVisible(true);
+    }
+    
+    protected void clearNotification() {
+
+        if (messageLabel == null) {
+            return;
+        }
+
+        messageLabel.setText("");
+
+        messageLabel.setVisible(false);
     }
 }

@@ -1,7 +1,7 @@
 /*
  * File: SignupScreen.java
- * Version: 0.4.2
- * Date last edited: 6/7/2026
+ * Version: 0.5.1
+ * Date last edited: 6/13/2026
  * Original Author: Orange Snaer
  * Adapted by: Alex Ronn
  * File Purpose: Launches the application, starting with the login screen.
@@ -33,8 +33,6 @@ public class SignupScreen extends BaseScreen {
 
     private TextField passwordVisibleField;
     private TextField confirmPasswordVisibleField;
-
-    private Label statusLabel;
 
     public SignupScreen(AppStateManager stateManager) {
 
@@ -183,24 +181,64 @@ public class SignupScreen extends BaseScreen {
 
         createAccountButton.setOnAction(event -> {
 
+            clearNotification();
+
+            String username =
+                    usernameField.getText().trim();
+
+            String password =
+                    passwordField.getText();
+
+            String confirmPassword =
+                    confirmPasswordField.getText();
+
+            if (username.isBlank()) {
+
+                showError(
+                        "Please enter a username."
+                );
+
+                return;
+            }
+
+            if (password.isBlank()) {
+
+                showError(
+                        "Please enter a password."
+                );
+
+                return;
+            }
+
+            if (!isValidPassword(password)) {
+
+                showError(
+                		getPasswordValidationMessage(password)
+                );
+
+                return;
+            }
+
+            if (!password.equals(confirmPassword)) {
+
+                showError(
+                        "Passwords do not match."
+                );
+
+                return;
+            }
+
+            showSuccess(
+                    "Account validation passed."
+            );
+
             // TODO:
-            // Validate fields
-            // Check password requirements
-            // Call FrontendApiService
-            // Navigate back to LoginScreen
+            // actually create an account
 
         });
-
         // Status Label
 
-        statusLabel = new Label();
-
-        statusLabel.setTextFill(
-                Color.web("#F44336")
-        );
-
-        statusLabel.setWrapText(true);
-        statusLabel.setMaxWidth(300);
+        messageLabel = createNotificationLabel();
 
         // Back To Login Link
 
@@ -231,7 +269,7 @@ public class SignupScreen extends BaseScreen {
                 showPasswordCheckBox,
                 passwordRequirements,
                 createAccountButton,
-                statusLabel,
+                messageLabel,
                 loginLink
         );
         
@@ -246,14 +284,18 @@ public class SignupScreen extends BaseScreen {
         return scene;
     }
 
-    /**
-     * Preserved from original design.
-     * Can be expanded later.
-     */
+    // used to get true/false for valid password
     private boolean isValidPassword(String password) {
 
+        return (getPasswordValidationMessage(password) == "");
+    }
+    
+    
+    private String getPasswordValidationMessage(
+            String password) {
+
         if (password.length() < 8) {
-            return false;
+            return "Password must be at least 8 characters.";
         }
 
         boolean hasUpper = false;
@@ -275,6 +317,18 @@ public class SignupScreen extends BaseScreen {
             }
         }
 
-        return hasUpper && hasLower && hasNumber;
+        if (!hasUpper) {
+            return "Password must contain an uppercase letter.";
+        }
+
+        if (!hasLower) {
+            return "Password must contain a lowercase letter.";
+        }
+
+        if (!hasNumber) {
+            return "Password must contain a number.";
+        }
+
+        return "";
     }
 }

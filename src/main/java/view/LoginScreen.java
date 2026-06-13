@@ -1,7 +1,7 @@
 /*
  * File: LoginScreen.java
- * Version: 0.4.2
- * Date last edited: 6/7/2026
+ * Version: 0.5.1
+ * Date last edited: 6/13/2026
  * Author: Alex Ronn
  * File Purpose: This class builds the login screen and 
  * 		provides functionality to its buttons.
@@ -27,7 +27,7 @@ public class LoginScreen extends BaseScreen {
 
     private TextField usernameField;
     private PasswordField passwordField;
-    private Label statusLabel;
+    private Label messageLabel;
     
     protected static final Color PRIMARY_BLUE =
             Color.web("#1E5AA8");
@@ -123,21 +123,53 @@ public class LoginScreen extends BaseScreen {
             -fx-font-weight: bold;
             """);
 
-        // Skeleton only for now
+        // Prototype login validation
         loginButton.setOnAction(event -> {
 
+            clearNotification();
+
+            String username =
+                    usernameField.getText();
+
+            String password =
+                    passwordField.getText();
+
+            if (username.isBlank()) {
+
+                showError(
+                        "Please enter a username."
+                );
+
+                return;
+            }
+
+            if (password.isBlank()) {
+
+                showError(
+                        "Please enter a password."
+                );
+
+                return;
+            }
+
+            showSuccess(
+                    "Validation passed."
+            );
+
             // TODO:
-            // Validate fields
-            // Call API service
-            // Navigate to next screen
+            // Authenticate user
+            
+            // TEMP test user login
+            if (username.equals("admin") && password.equals("password")) {
+            	System.out.println("logging into test admin");
+            	stateManager.showDashboardScreen();
+            }
 
         });
 
-        // Status Label
+        // Message Label
 
-        statusLabel = new Label();
-
-        statusLabel.setTextFill(ERROR_RED);
+        messageLabel = createNotificationLabel();
 
         // Register Link
 
@@ -162,7 +194,7 @@ public class LoginScreen extends BaseScreen {
                 usernameField,
                 passwordField,
                 loginButton,
-                statusLabel,
+                messageLabel,
                 registerLink
         );
         
