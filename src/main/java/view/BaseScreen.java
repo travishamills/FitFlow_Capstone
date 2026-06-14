@@ -1,7 +1,7 @@
 /*
  * File: BaseScreen.java
- * Version: 0.5.1
- * Date last edited: 6/13/2026
+ * Version: 0.5.2
+ * Date last edited: 6/14/2026
  * Author: Alex Ronn
  * File Purpose: Abstract class that provides methods to set up the consistent interfaces.
  */
@@ -151,7 +151,7 @@ public abstract class BaseScreen {
         button.setPrefSize(40, 40);
 
         button.setStyle("""
-            -fx-background-color: #1E5AA8;
+            -fx-background-color: #002254;
             -fx-background-radius: 10;
             -fx-cursor: hand;
             """);
@@ -222,10 +222,8 @@ public abstract class BaseScreen {
         dashboardButton.setOnAction(event ->
         		stateManager.showDashboardScreen());
 
-        /*
         builderButton.setOnAction(event ->
-                stateManager.showWorkoutBuilderScreen());
-		*/
+                stateManager.showRoutineBuilderScreen());
         
         /*
         historyButton.setOnAction(event ->

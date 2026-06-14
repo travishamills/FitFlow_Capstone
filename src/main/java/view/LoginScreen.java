@@ -1,7 +1,7 @@
 /*
  * File: LoginScreen.java
- * Version: 0.5.1
- * Date last edited: 6/13/2026
+ * Version: 0.5.2
+ * Date last edited: 6/14/2026
  * Author: Alex Ronn
  * File Purpose: This class builds the login screen and 
  * 		provides functionality to its buttons.
@@ -122,6 +122,9 @@ public class LoginScreen extends BaseScreen {
             -fx-font-family: "Segoe UI";
             -fx-font-weight: bold;
             """);
+        
+        // added so I can press enter to login lol
+        loginButton.setDefaultButton(true);
 
         // Prototype login validation
         loginButton.setOnAction(event -> {

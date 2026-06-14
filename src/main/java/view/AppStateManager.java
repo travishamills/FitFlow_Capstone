@@ -1,7 +1,7 @@
 /*
  * File: AppStateManager.java
- * Version: 0.5.1
- * Date last edited: 6/13/2026
+ * Version: 0.5.2
+ * Date last edited: 6/14/2026
  * Author: Alex Ronn
  * File Purpose: Manages swapping between different pages in the application.
  */
@@ -60,6 +60,17 @@ public class AppStateManager {
         primaryStage.setScene(
         		dashboardScreen.getScene()
         );
+    }
+    
+    /**
+     * Shows the routine builder screen.
+     */
+    public void showRoutineBuilderScreen() {
+
+    	RoutineBuilderScreen routineBuilderScreen =
+                new RoutineBuilderScreen(this);
+
+    	routineBuilderScreen.show(primaryStage);
     }
     
     /**

@@ -1,7 +1,7 @@
 /*
  * File: SignupScreen.java
- * Version: 0.5.1
- * Date last edited: 6/13/2026
+ * Version: 0.5.2
+ * Date last edited: 6/14/2026
  * Original Author: Orange Snaer
  * Adapted by: Alex Ronn
  * File Purpose: Launches the application, starting with the login screen.
@@ -178,6 +178,8 @@ public class SignupScreen extends BaseScreen {
             -fx-font-family: "Segoe UI";
             -fx-font-weight: bold;
             """);
+        
+        createAccountButton.setDefaultButton(true);
 
         createAccountButton.setOnAction(event -> {
 

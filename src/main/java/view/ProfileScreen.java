@@ -267,9 +267,9 @@ public class ProfileScreen extends BaseScreen {
         );
         
         card.getChildren().add(content);
-        addNavigationMenu(card);
 
         root.getChildren().add(card);
+        addNavigationMenu(root);
 
         scene = new Scene(root, 1200, 800);
     }

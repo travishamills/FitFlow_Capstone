@@ -1,7 +1,7 @@
 /*
  * File: Main.java
- * Version: 0.5.1
- * Date last edited: 6/13/2026
+ * Version: 0.5.2
+ * Date last edited: 6/14/2026
  * Author: Alex Ronn
  * File Purpose: Launches the application, starting with the login screen.
  */
@@ -22,7 +22,7 @@ public class Main extends Application {
         primaryStage.setTitle("FitFlow");
 
         stateManager.showLoginScreen();  // sometimes hidden to test other screens
-        //stateManager.showDashboardScreen();
+        //stateManager.showRoutineBuilderScreen();
 
         primaryStage.show();
     }
