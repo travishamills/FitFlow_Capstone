@@ -149,7 +149,8 @@ public class SignupScreen extends BaseScreen {
         });
 
         // Password Requirements
-
+        
+        /*
         Label passwordRequirements =
                 new Label(
                         """
@@ -158,6 +159,17 @@ public class SignupScreen extends BaseScreen {
                         • One uppercase letter
                         • One lowercase letter
                         • One number
+                        """
+                );
+        */
+        
+        // matching displayed password requirements to validation util
+        // can change later if needed
+        Label passwordRequirements =
+                new Label(
+                        """
+                        Password Requirements:
+                        • At least 6 characters
                         """
                 );
 
@@ -193,49 +205,15 @@ public class SignupScreen extends BaseScreen {
 
             String confirmPassword =
                     confirmPasswordField.getText();
-
-            if (username.isBlank()) {
-
-                showError(
-                        "Please enter a username."
-                );
-
-                return;
+            
+            // temporary test email, unsure if we are keeping it
+            final String TEST_EMAIL = "test@test.com";
+            
+            if (!password.equals("") && password.equals(confirmPassword)) {
+            	stateManager.signUpAttempt(username, password, TEST_EMAIL);
+            } else {
+            	showError("Passwords do not match.");
             }
-
-            if (password.isBlank()) {
-
-                showError(
-                        "Please enter a password."
-                );
-
-                return;
-            }
-
-            if (!isValidPassword(password)) {
-
-                showError(
-                		getPasswordValidationMessage(password)
-                );
-
-                return;
-            }
-
-            if (!password.equals(confirmPassword)) {
-
-                showError(
-                        "Passwords do not match."
-                );
-
-                return;
-            }
-
-            showSuccess(
-                    "Account validation passed."
-            );
-
-            // TODO:
-            // actually create an account
 
         });
         // Status Label
@@ -281,56 +259,18 @@ public class SignupScreen extends BaseScreen {
 
         scene = new Scene(root, 900, 800);
     }
+    
+    public void clearUsername() {
+    	usernameField.setText("");
+    }
+    
+    public void clearPasswords() {
+    	passwordField.setText("");
+    	confirmPasswordField.setText("");
+    }
 
     public Scene getScene() {
         return scene;
     }
 
-    // used to get true/false for valid password
-    private boolean isValidPassword(String password) {
-
-        return (getPasswordValidationMessage(password) == "");
-    }
-    
-    
-    private String getPasswordValidationMessage(
-            String password) {
-
-        if (password.length() < 8) {
-            return "Password must be at least 8 characters.";
-        }
-
-        boolean hasUpper = false;
-        boolean hasLower = false;
-        boolean hasNumber = false;
-
-        for (char c : password.toCharArray()) {
-
-            if (Character.isUpperCase(c)) {
-                hasUpper = true;
-            }
-
-            if (Character.isLowerCase(c)) {
-                hasLower = true;
-            }
-
-            if (Character.isDigit(c)) {
-                hasNumber = true;
-            }
-        }
-
-        if (!hasUpper) {
-            return "Password must contain an uppercase letter.";
-        }
-
-        if (!hasLower) {
-            return "Password must contain a lowercase letter.";
-        }
-
-        if (!hasNumber) {
-            return "Password must contain a number.";
-        }
-
-        return "";
-    }
 }

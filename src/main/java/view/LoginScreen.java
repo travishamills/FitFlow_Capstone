@@ -126,7 +126,7 @@ public class LoginScreen extends BaseScreen {
         // added so I can press enter to login lol
         loginButton.setDefaultButton(true);
 
-        // Prototype login validation
+        // sends login validation attempt
         loginButton.setOnAction(event -> {
 
             clearNotification();
@@ -137,36 +137,7 @@ public class LoginScreen extends BaseScreen {
             String password =
                     passwordField.getText();
 
-            if (username.isBlank()) {
-
-                showError(
-                        "Please enter a username."
-                );
-
-                return;
-            }
-
-            if (password.isBlank()) {
-
-                showError(
-                        "Please enter a password."
-                );
-
-                return;
-            }
-
-            showSuccess(
-                    "Validation passed."
-            );
-
-            // TODO:
-            // Authenticate user
-            
-            // TEMP test user login
-            if (username.equals("admin") && password.equals("password")) {
-            	System.out.println("logging into test admin");
-            	stateManager.showDashboardScreen();
-            }
+            stateManager.signInAttempt(username,  password);
 
         });
 
@@ -206,6 +177,14 @@ public class LoginScreen extends BaseScreen {
         root.getChildren().add(card);
 
         scene = new Scene(root, 900, 800);
+    }
+    
+    public void clearPassword() {
+    	passwordField.setText("");
+    }
+    
+    public void fillUsername(String user) {
+    	usernameField.setText(user);
     }
 
     public Scene getScene() {

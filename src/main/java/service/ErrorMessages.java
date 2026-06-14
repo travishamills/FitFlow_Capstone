@@ -37,7 +37,7 @@ public final class ErrorMessages {
     public static final String SUCCESS_CALORIES_CALCULATED = "Calories calculated successfully.";
     public static final String SUCCESS_RECOMMENDATION_CREATED = "Workout recommendation created successfully.";
 
-    public static final String USERNAME_REQUIRED = "Username is required.";
+    public static final String USERNAME_REQUIRED = "Username must be at least 3 characters.";
     public static final String PASSWORD_REQUIRED = "Password is required.";
     public static final String EMAIL_REQUIRED = "Email is required.";
     public static final String INVALID_EMAIL = "Email must contain @ and a valid domain.";

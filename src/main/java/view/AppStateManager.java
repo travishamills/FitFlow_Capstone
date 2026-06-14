@@ -10,13 +10,19 @@ package view;
 
 import javafx.stage.Stage;
 import model.UserProfile;
+import service.*;
 
 public class AppStateManager {
 
     private final Stage primaryStage;
+    private LoginScreen loginScreen;
+    private SignupScreen signupScreen; 
+    private FitFlowFacade facade;
+    private String sessionToken;
 
     public AppStateManager(Stage primaryStage) {
         this.primaryStage = primaryStage;
+        facade = new FitFlowFacade();
     }
 
     public Stage getPrimaryStage() {
@@ -28,8 +34,10 @@ public class AppStateManager {
      */
     public void showLoginScreen() {
 
-        LoginScreen loginScreen =
-                new LoginScreen(this);
+    	if (loginScreen == null)
+    		loginScreen = new LoginScreen(this);
+    	else
+    		loginScreen.clearPassword();
 
         primaryStage.setScene(
                 loginScreen.getScene()
@@ -41,8 +49,10 @@ public class AppStateManager {
      */
     public void showSignupScreen() {
 
-        SignupScreen signupScreen =
-                new SignupScreen(this);
+    	if (signupScreen == null)
+    		signupScreen = new SignupScreen(this);
+    	else
+    		signupScreen.clearPasswords();
 
         primaryStage.setScene(
                 signupScreen.getScene()
@@ -99,6 +109,49 @@ public class AppStateManager {
         primaryStage.setScene(
                 screen.getScene()
         );
+    }
+    
+    /*
+     * Handles attempts to log in
+     */
+    public void signInAttempt(String username, String password) {
+    	ServiceResponse<String> attempt = facade.signIn(username, password);
+    	if (attempt.isSuccess()) {
+    		sessionToken = attempt.getData();
+    		showDashboardScreen();
+    	} else {
+    		String reason = attempt.getMessage();
+    		loginScreen.showError(reason);
+    	}
+    }
+    
+    /*
+     * Handles logging out
+     */
+    public void logOut() {
+    	ServiceResponse<Boolean> attempt = facade.logout(sessionToken);
+    	if (attempt.isSuccess()) {
+    		loginScreen.showSuccess(attempt.getMessage());
+    		showLoginScreen();
+    	} else {
+    		loginScreen.showError(attempt.getMessage());
+    		showLoginScreen();
+    	}
+    }
+    
+    /*
+     * Handles attempts to sign up
+     */
+    public void signUpAttempt(String username, String password, String email) {
+    	ServiceResponse<String> attempt = facade.signUp(username, password, email);
+    	if (attempt.isSuccess()) {
+    		showLoginScreen();
+    		loginScreen.showSuccess(attempt.getMessage());
+    		loginScreen.fillUsername(username);
+    	} else {
+    		String reason = attempt.getMessage();
+    		signupScreen.showError(reason);
+    	}
     }
     
 }

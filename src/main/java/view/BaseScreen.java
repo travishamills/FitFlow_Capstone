@@ -236,7 +236,8 @@ public abstract class BaseScreen {
         */
 
         logoutButton.setOnAction(event ->
-                stateManager.showLoginScreen());
+                stateManager.logOut()
+        );
         
         // Assemble
 
