@@ -138,7 +138,6 @@ private VBox ExerciseList() {
     
     for (int i = 0; i < exercises.size(); i++) {
     	String exercise = exercises.get(i);
-    	System.out.println(exercise);
     	box.getChildren().add(ExercisePanelList(exercise));
     }
 

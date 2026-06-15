@@ -198,12 +198,21 @@ public class ProfileScreen extends BaseScreen {
             -fx-background-radius: 10;
             -fx-font-weight: bold;
             """);
-
-        saveButton.setOnAction(event -> {
-
-            // TODO:
-            // Save profile through API
-
+        
+        saveButton.setOnAction(event -> { 
+        	// TODO:
+        	// add data validation, especially for the numbers
+        	
+        	UserProfile dataToSave = new UserProfile(
+        			profile.getUserId(),
+                    profile.getUsername(),
+                    firstNameField.getText(),
+                    lastNameField.getText(),
+                    Integer.parseInt(ageField.getText()),
+                    Double.parseDouble(heightField.getText()),
+                    Double.parseDouble(weightField.getText()),
+                    getSelectedGender());
+        	stateManager.saveProfile(dataToSave);
         });
 
         Button logoutButton =
@@ -213,6 +222,7 @@ public class ProfileScreen extends BaseScreen {
             -fx-background-color: #1E5AA8;
             -fx-text-fill: white;
             -fx-background-radius: 10;
+            -fx-font-weight: bold;
             """);
 
         logoutButton.setOnAction(event -> {
@@ -321,6 +331,14 @@ public class ProfileScreen extends BaseScreen {
         }
 
         bmiLabel.setText("---");
+    }
+    
+    private String getSelectedGender() {
+    	if (maleButton.isSelected())
+    		return "Male";
+    	else if (femaleButton.isSelected())
+    		return "Female";
+    	return "Other";
     }
     
     public Scene getScene() {

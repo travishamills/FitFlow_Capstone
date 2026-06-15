@@ -8,7 +8,6 @@
 
 package view;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javafx.stage.Stage;
@@ -20,6 +19,7 @@ public class AppStateManager {
     private final Stage primaryStage;
     private LoginScreen loginScreen;
     private SignupScreen signupScreen; 
+    private ProfileScreen profileScreen;
     private FitFlowFacade facade;
     private String sessionToken;
 
@@ -90,27 +90,29 @@ public class AppStateManager {
      * Shows the profile screen.
      */
     public void showProfileScreen() {
+    	
+    	if (profileScreen == null) {
+    		UserProfile testUser =
+                    new UserProfile(
+                            "1",
+                            "jsmith",
+                            "John",
+                            "Smith",
+                            27,
+                            70,
+                            180,
+                            "Male"
+                    );
 
-        UserProfile testUser =
-                new UserProfile(
-                        "1",
-                        "jsmith",
-                        "John",
-                        "Smith",
-                        27,
-                        70,
-                        180,
-                        "Male"
-                );
-
-        ProfileScreen screen =
-                new ProfileScreen(
-                        this,
-                        testUser
-                );
-
+            profileScreen =
+                    new ProfileScreen(
+                            this,
+                            testUser
+                    );
+    	}
+    	
         primaryStage.setScene(
-                screen.getScene()
+        		profileScreen.getScene()
         );
     }
     
@@ -166,6 +168,21 @@ public class AppStateManager {
     		return attempt.getData();
     	}
     	return null;
+    }
+    
+    /*
+     * Handles attempts to sign up
+     */
+    public void saveProfile(UserProfile profileData) {
+    	System.out.println("PLACEHOLDER - SHOULD ATTEMPT TO SAVE PROFILE AS " + profileData);
+    	/*
+    	ServiceResponse<String> attempt = facade.saveProfile(sessionToken, profileData);
+    	if (attempt.isSuccess()) {
+    		// notify success? need label on profileScreen
+    	} else {
+    		// notify error? still need label
+    	}
+    	*/
     }
     
 }
