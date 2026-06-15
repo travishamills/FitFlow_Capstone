@@ -23,7 +23,7 @@ public class Calculator {
             return 0;
         }
 
-        return weight / (height * height);
+        return 703 * weight / (height * height);
     }
 
     /*

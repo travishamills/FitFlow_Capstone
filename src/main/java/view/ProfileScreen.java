@@ -9,6 +9,7 @@
 
 package view;
 
+import java.text.DecimalFormat;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -17,6 +18,7 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import model.UserProfile;
+import util.Calculator;
 
 public class ProfileScreen extends BaseScreen {
 
@@ -213,6 +215,7 @@ public class ProfileScreen extends BaseScreen {
                     Double.parseDouble(weightField.getText()),
                     getSelectedGender());
         	stateManager.saveProfile(dataToSave);
+        	updateBMILabel();
         });
 
         Button logoutButton =
@@ -227,7 +230,7 @@ public class ProfileScreen extends BaseScreen {
 
         logoutButton.setOnAction(event -> {
 
-            stateManager.showLoginScreen();
+        	stateManager.logOut();
 
         });
 
@@ -330,7 +333,7 @@ public class ProfileScreen extends BaseScreen {
                 otherButton.setSelected(true);
         }
 
-        bmiLabel.setText("---");
+        updateBMILabel();
     }
     
     private String getSelectedGender() {
@@ -339,6 +342,17 @@ public class ProfileScreen extends BaseScreen {
     	else if (femaleButton.isSelected())
     		return "Female";
     	return "Other";
+    }
+    
+    public void updateBMILabel() {
+    	DecimalFormat df = new DecimalFormat("#.##");
+    	
+    	double weight = Double.parseDouble(weightField.getText());
+    	double height = Double.parseDouble(heightField.getText());
+    	
+    	double bmi = Calculator.calculateBMI(weight, height);
+    	String formatted = df.format(bmi);
+    	bmiLabel.setText(formatted);
     }
     
     public Scene getScene() {
