@@ -8,6 +8,9 @@
 
 package view;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javafx.stage.Stage;
 import model.UserProfile;
 import service.*;
@@ -152,6 +155,17 @@ public class AppStateManager {
     		String reason = attempt.getMessage();
     		signupScreen.showError(reason);
     	}
+    }
+    
+    /*
+     * Handles attempts to sign up
+     */
+    public List<String> getExercises() {
+    	ServiceResponse<List<String>> attempt = facade.getWorkouts(sessionToken);
+    	if (attempt.isSuccess()) {
+    		return attempt.getData();
+    	}
+    	return null;
     }
     
 }

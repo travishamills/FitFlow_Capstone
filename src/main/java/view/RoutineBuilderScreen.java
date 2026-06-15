@@ -10,6 +10,7 @@
 
 package view;
 
+import java.util.List;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -131,13 +132,15 @@ private VBox ExerciseList() {
 
     //Add title to the screen
     box.getChildren().add(title);
-
+    
     //Add exercise lists such as planks, push ups on the screen
-    box.getChildren().add(ExercisePanelList("Dumbbell Biceps Curls"));
-    box.getChildren().add(ExercisePanelList("Plank"));
-    box.getChildren().add(ExercisePanelList("Push-Up"));
-    box.getChildren().add(ExercisePanelList("Sit-Up"));
-    box.getChildren().add(ExercisePanelList("Squat"));
+    List<String> exercises = stateManager.getExercises();
+    
+    for (int i = 0; i < exercises.size(); i++) {
+    	String exercise = exercises.get(i);
+    	System.out.println(exercise);
+    	box.getChildren().add(ExercisePanelList(exercise));
+    }
 
     return box;
 }
@@ -251,7 +254,7 @@ private ImageView ExerciseImage(String exerciseName) {
     switch (exerciseName) {
 
         //comment for now till the offical image is decided
-        case "Push-Up":
+        case "Push-ups":
            // return createIcon("/Images/pushup.png", 100);
            return createIcon(IMAGES + "/snail1.jpg", 100);
 
@@ -259,15 +262,15 @@ private ImageView ExerciseImage(String exerciseName) {
             //return createIcon("/Images/plank.png", 100);
             return createIcon(IMAGES + "/snail2.jpg", 100);
 
-        case "Sit-Up":
+        case "Sit-ups":
             //return createIcon("/Images/situp.png", 100);
             return createIcon(IMAGES + "/snail3.jpg", 100);
 
-        case "Squat":
+        case "Squats":
             //return createIcon("/Images/squat.png", 100);
             return createIcon(IMAGES + "/snail4.jpg", 100);
 
-        case "Dumbbell Biceps Curls":
+        case "Dumbbell Curls":
             //return createIcon("/Images/biceps.png", 100);
             return createIcon(IMAGES + "/snail5.jpg", 100);
 
