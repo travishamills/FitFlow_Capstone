@@ -1,7 +1,7 @@
 /*
  * File: BaseScreen.java
  * Version: 0.5.2
- * Date last edited: 6/14/2026
+ * Date last edited: 6/15/2026
  * Author: Alex Ronn
  * File Purpose: Abstract class that provides methods to set up the consistent interfaces.
  */
@@ -294,6 +294,7 @@ public abstract class BaseScreen {
         return label;
     }
     
+    // Used to display an error on the page's messageLabel
     protected void showError(String message) {
 
         if (messageLabel == null) {
@@ -312,6 +313,7 @@ public abstract class BaseScreen {
         messageLabel.setVisible(true);
     }
     
+ // Used to display a success message on the page's messageLabel
     protected void showSuccess(String message) {
 
         if (messageLabel == null) {
@@ -330,6 +332,7 @@ public abstract class BaseScreen {
         messageLabel.setVisible(true);
     }
     
+ // Used to clear the page's messageLabel
     protected void clearNotification() {
 
         if (messageLabel == null) {
@@ -339,5 +342,19 @@ public abstract class BaseScreen {
         messageLabel.setText("");
 
         messageLabel.setVisible(false);
+    }
+    
+    // Used to create an overlay over the current page
+    protected StackPane createOverlay() {
+
+        StackPane overlay = new StackPane();
+
+        overlay.setVisible(false);
+
+        overlay.setStyle("""
+            -fx-background-color: rgba(0,0,0,0.4);
+            """);
+
+        return overlay;
     }
 }

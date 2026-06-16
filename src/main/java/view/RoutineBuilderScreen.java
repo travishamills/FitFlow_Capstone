@@ -1,7 +1,7 @@
 /*
  * File: RoutineBuilderScreen.java
  * Version: 0.5.2
- * Date last edited: 6/14/2026
+ * Date last edited: 6/15/2026
  * Original Author: Orange Snaer
  * Adapted by: Alex Ronn
  * File Purpose: This class builds the workout
@@ -17,6 +17,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -46,6 +47,13 @@ public class RoutineBuilderScreen extends BaseScreen {
     private ScrollPane routinePanel;
     private  HBox centerExerciseList;
     private HBox bottomButtons;
+    
+    // features in the overlay for saving
+    private StackPane saveRoutineOverlay;
+    private TextField routineNameField;
+    private Label routineNameMessageLabel;
+    
+    private Button saveRoutineButton;
     
     public RoutineBuilderScreen(AppStateManager stateManager) {
         super(stateManager);
@@ -82,6 +90,13 @@ public class RoutineBuilderScreen extends BaseScreen {
         //Add navigation menu
         root.getChildren().add(primaryPane);
         addNavigationMenu(root);
+        
+        //Add hidden overlay for name prompting
+        saveRoutineOverlay = createSaveRoutineOverlay();
+
+        root.getChildren().add(
+                saveRoutineOverlay
+        );
 
         //Create window size
         Scene scene = new Scene(root, 1600, 1000);
@@ -435,29 +450,27 @@ private VBox ComponentsControl(String labelText, int initialValue) {
 
 
 private HBox BottomButtons(Stage stage) {
-    Button saveButton = new Button("Save");
+    saveRoutineButton = new Button("Save");
     Button startButton = new Button("Start Exercise");
 
     //Set background color for all panels
     BackgroundFill buttonBckgrnd = new BackgroundFill(Color.LIGHTGRAY, new CornerRadii(6), Insets.EMPTY);
     Background backgrnd = new Background(buttonBckgrnd);
-    saveButton.setBackground(backgrnd);
+    saveRoutineButton.setBackground(backgrnd);
     startButton.setBackground(backgrnd);
 
     //Set font style, weight and size of the text
-    saveButton.setFont(Font.font("Arial", 14));
+    saveRoutineButton.setFont(Font.font("Arial", 14));
     startButton.setFont(Font.font("Arial", 14));
 
-    saveButton.setPrefSize(120, 40);
+    saveRoutineButton.setPrefSize(120, 40);
     startButton.setPrefSize(160, 40);
 
-    saveButton.setOnAction(e -> {
-        if (addedRoutineListPanel.getChildren().isEmpty()) {
-            System.out.println("No exercises to save.");
-            return;
-        }
+    saveRoutineButton.setOnAction(event -> {
 
-        System.out.println("Routine Saved!");
+        routineNameField.clear();
+        routineNameMessageLabel.setText("");
+        saveRoutineOverlay.setVisible(true);
     });
 
     startButton.setOnAction(e -> startWorkout(stage));
@@ -467,7 +480,7 @@ private HBox BottomButtons(Stage stage) {
     buttons.setPadding(new Insets(20));
 
     //Add to screen
-    buttons.getChildren().addAll(saveButton, startButton);
+    buttons.getChildren().addAll(saveRoutineButton, startButton);
 
     //Hide buttons
     buttons.setVisible(false);
@@ -490,6 +503,112 @@ private void startWorkout(Stage stage) {
     stage.setScene(workoutScene);
     }
 
+
+// used to create an overlay prompting the user for a routine name
+private StackPane createSaveRoutineOverlay() {
+
+    StackPane overlay = createOverlay();
+
+    StackPane popupCard = createCard(350, 250);
+
+    VBox content = createCardContent();
+
+    Label title =
+            new Label("Save Routine");
+
+    title.setStyle("""
+        -fx-font-size: 20;
+        -fx-font-weight: bold;
+        """);
+
+    Label instructions =
+            new Label(
+                "Enter a routine name:"
+            );
+
+    routineNameField =
+            new TextField();
+
+    routineNameField.setPromptText(
+            "Routine Name"
+    );
+
+    routineNameField.setMaxWidth(250);
+
+    routineNameMessageLabel =
+            new Label();
+
+    routineNameMessageLabel.setWrapText(true);
+
+    Button saveButton =
+            new Button("Save");
+
+    Button closeButton =
+            new Button("Close");
+
+    HBox buttonRow =
+            new HBox(10,
+                    saveButton,
+                    closeButton);
+
+    buttonRow.setAlignment(Pos.CENTER);
+
+    content.getChildren().addAll(
+            title,
+            instructions,
+            routineNameField,
+            routineNameMessageLabel,
+            buttonRow
+    );
+
+    popupCard.getChildren().add(content);
+
+    overlay.getChildren().add(popupCard);
+
+    saveButton.setOnAction(event -> {
+
+        String routineName =
+                routineNameField.getText()
+                                .trim();
+
+        if(routineName.isEmpty()) {
+
+            routineNameMessageLabel.setText(
+                "Please enter a routine name."
+            );
+
+            routineNameMessageLabel.setTextFill(
+                Color.RED
+            );
+
+            return;
+        }
+
+        /*
+         * TODO:
+         * save routine
+         */
+
+        routineNameMessageLabel.setText(
+            "Routine saved."
+        );
+
+        routineNameMessageLabel.setTextFill(
+            Color.GREEN
+        );
+    });
+
+    closeButton.setOnAction(event -> {
+
+        routineNameField.clear();
+
+        routineNameMessageLabel.setText("");
+
+        overlay.setVisible(false);
+    });
+
+    return overlay;
+}
 
 }
 
