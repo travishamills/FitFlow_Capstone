@@ -4,7 +4,6 @@
  * Project: FitFlow
  * Date: June 2026
  * Version: 1.0
- *
  * Description:
  * This file handles saving and loading workout history.
  * I made this so workout history has its own repository instead of keeping
