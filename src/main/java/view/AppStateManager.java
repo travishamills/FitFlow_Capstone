@@ -1,22 +1,26 @@
 /*
  * File: AppStateManager.java
- * Version: 0.6.1
+ * Version: 0.6.2
  * Date last edited: 6/20/2026
  * Author: Alex Ronn
  * Modified by: David Lewis
  * File Purpose: Manages swapping between different pages in the application.
- * Update Notes: Added routine-save routing so RoutineBuilderScreen sends save
- * requests through AppStateManager before reaching FitFlowFacade. This keeps
- * the view layer separate from the service layer and matches the team UML flow.
+ * Update Notes: Added routine-save routing and profile-save routing so JavaFX
+ * screens send save requests through AppStateManager before reaching
+ * FitFlowFacade. This keeps the view layer separate from the service layer and
+ * matches the team UML flow.
  */
 
 package view;
+
 import java.util.List;
+
 import javafx.stage.Stage;
 import model.UserProfile;
 import service.*;
 
 public class AppStateManager {
+
     private final Stage primaryStage;
     private LoginScreen loginScreen;
     private SignupScreen signupScreen; 
@@ -32,7 +36,7 @@ public class AppStateManager {
     public Stage getPrimaryStage() {
         return primaryStage;
     }
-    
+
     /**
      * Shows the login screen.
      */
@@ -163,9 +167,9 @@ public class AppStateManager {
     /*
      * Gets the exercise names that should be displayed in the routine builder.
      *
-     * What: Requests the exercise list from FitFlowFacade.
-     * Why: Keeps the JavaFX screen from building its own workout data.
-     * How: Sends the current session token to the service layer and returns
+     * Requests the exercise list from FitFlowFacade.
+     * Keeps the JavaFX screen from building its own workout data.
+     * Sends the current session token to the service layer and returns
      * only the list data when the request succeeds.
      */
     public List<String> getExercises() {
@@ -179,10 +183,10 @@ public class AppStateManager {
     /*
      * Sends a routine save request from the UI to the service facade.
      *
-     * What: Receives a routine name and selected exercise names from the
+     * Receives a routine name and selected exercise names from the
      * routine builder screen.
-     * Why: The view package should not call FitFlowFacade directly.
-     * How: AppStateManager passes the current session token and routine data
+     * The view package should not call FitFlowFacade directly.
+     * AppStateManager passes the current session token and routine data
      * to FitFlowFacade.saveWorkout, then returns the ServiceResponse so the
      * screen can display the real success or error message.
      */
@@ -191,18 +195,17 @@ public class AppStateManager {
     }
     
     /*
-     * Handles attempts to sign up
+     * Sends a profile save request from the UI to the service facade.
+     *
+     * Receives updated profile data from ProfileScreen.
+     * ProfileScreen should not save directly to CSV or call backend files
+     * because the UI layer should stay separate from service/data logic.
+     * AppStateManager passes the active session token and UserProfile
+     * object to FitFlowFacade.saveProfile, then returns the ServiceResponse so
+     * ProfileScreen can show a clear success or error message.
      */
-    public void saveProfile(UserProfile profileData) {
-    	System.out.println("PLACEHOLDER - SHOULD ATTEMPT TO SAVE PROFILE AS " + profileData);
-    	/*
-    	ServiceResponse<String> attempt = facade.saveProfile(sessionToken, profileData);
-    	if (attempt.isSuccess()) {
-    		// notify success? need label on profileScreen
-    	} else {
-    		// notify error? still need label
-    	}
-    	*/
+    public ServiceResponse<Boolean> saveProfile(UserProfile profileData) {
+        return facade.saveProfile(sessionToken, profileData);
     }
     
 }
