@@ -1,21 +1,22 @@
 /*
  * File: AppStateManager.java
- * Version: 0.5.2
- * Date last edited: 6/14/2026
+ * Version: 0.6.1
+ * Date last edited: 6/20/2026
  * Author: Alex Ronn
+ * Modified by: David Lewis
  * File Purpose: Manages swapping between different pages in the application.
+ * Update Notes: Added routine-save routing so RoutineBuilderScreen sends save
+ * requests through AppStateManager before reaching FitFlowFacade. This keeps
+ * the view layer separate from the service layer and matches the team UML flow.
  */
 
 package view;
-
 import java.util.List;
-
 import javafx.stage.Stage;
 import model.UserProfile;
 import service.*;
 
 public class AppStateManager {
-
     private final Stage primaryStage;
     private LoginScreen loginScreen;
     private SignupScreen signupScreen; 
@@ -31,7 +32,7 @@ public class AppStateManager {
     public Stage getPrimaryStage() {
         return primaryStage;
     }
-
+    
     /**
      * Shows the login screen.
      */
@@ -160,14 +161,33 @@ public class AppStateManager {
     }
     
     /*
-     * Handles attempts to sign up
+     * Gets the exercise names that should be displayed in the routine builder.
+     *
+     * What: Requests the exercise list from FitFlowFacade.
+     * Why: Keeps the JavaFX screen from building its own workout data.
+     * How: Sends the current session token to the service layer and returns
+     * only the list data when the request succeeds.
      */
     public List<String> getExercises() {
     	ServiceResponse<List<String>> attempt = facade.getWorkouts(sessionToken);
     	if (attempt.isSuccess()) {
     		return attempt.getData();
     	}
-    	return null;
+    	return List.of();
+    }
+    
+    /*
+     * Sends a routine save request from the UI to the service facade.
+     *
+     * What: Receives a routine name and selected exercise names from the
+     * routine builder screen.
+     * Why: The view package should not call FitFlowFacade directly.
+     * How: AppStateManager passes the current session token and routine data
+     * to FitFlowFacade.saveWorkout, then returns the ServiceResponse so the
+     * screen can display the real success or error message.
+     */
+    public ServiceResponse<Boolean> saveRoutine(String routineName, List<String> exerciseNames) {
+        return facade.saveWorkout(sessionToken, routineName, exerciseNames);
     }
     
     /*
