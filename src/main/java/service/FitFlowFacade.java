@@ -2,11 +2,11 @@
  * File: FitFlowFacade.java
  * Project: FitFlow - Interactive Workout Assistant
  * Course: UMGC CMSC 495
- * Phase: Phase I Source Code
- * Week: 4
- * Version: v0.4.03
+ * Phase: Phase II Source Code
+ * Week: 6
+ * Version: v0.6.01
  * Author: David Lewis
- * Last Updated: 2026-06-07
+ * Last Updated: 2026-06-20
  *
  * Purpose:
  * Provides a central integration point between frontend controllers and
@@ -14,10 +14,18 @@
  * of directly accessing CSV repositories or lower-level backend classes.
  *
  * Dependencies:
- * ServiceResponse, ErrorMessages, ValidationUtil, Java Standard Library.
+ * ServiceResponse, ErrorMessages, ValidationUtil, UserProfile, CSVHelper,
+ * Java Standard Library.
+ *
+ * Update Notes:
+ * Added saveProfile so AppStateManager can route profile updates through the
+ * service layer instead of leaving ProfileScreen with a placeholder save path.
  *
  */
 package service;
+
+import model.UserProfile;
+import repository.CSVHelper;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -202,6 +210,38 @@ public class FitFlowFacade {
         }
 
         return ServiceResponse.success("Saved workout routines loaded successfully.", new ArrayList<String>(routines));
+    }
+
+    /**
+     * Saves updated profile data for the signed-in user.
+     *
+     * Accepts a UserProfile object from AppStateManager and saves it
+     * through the repository helper.
+     * The frontend should not write directly to CSV files or bypass the
+     * service layer. This method keeps profile persistence aligned with the
+     * project architecture.
+     * The method checks the session token, validates required profile
+     * fields, then asks CSVHelper to append the profile record to profiles.csv.
+     *
+     * @param sessionToken Active session token.
+     * @param profileData Updated profile information from the profile screen.
+     * @return ServiceResponse confirming whether the profile save completed.
+     */
+    public ServiceResponse<Boolean> saveProfile(String sessionToken, UserProfile profileData) {
+        if (!isValidSession(sessionToken)) {
+            return ServiceResponse.error(ErrorMessages.SESSION_EXPIRED, ErrorMessages.CODE_SESSION);
+        }
+
+        if (profileData == null
+                || ValidationUtil.isBlank(profileData.getFirstName())
+                || ValidationUtil.isBlank(profileData.getLastName())
+                || profileData.getAge() <= 0
+                || !ValidationUtil.isValidHeightWeight(profileData.getHeight(), profileData.getWeight())) {
+            return ServiceResponse.error(ErrorMessages.INVALID_PROFILE, ErrorMessages.CODE_VALIDATION);
+        }
+
+        CSVHelper.saveProfile(profileData);
+        return ServiceResponse.success(ErrorMessages.SUCCESS_PROFILE_SAVED, Boolean.TRUE);
     }
 
     /**
