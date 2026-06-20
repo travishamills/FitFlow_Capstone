@@ -1,10 +1,14 @@
 /*
  * File: ProfileScreen.java
- * Version: 0.4.2
- * Date last edited: 6/7/2026
+ * Version: 0.6.1
+ * Date last edited: 6/20/2026
  * Author: Alex Ronn
+ * Modified by: David Lewis
  * File Purpose: This class builds the profile screen
  * 		and allows the user to edit values.
+ * Update Notes: Connected the Save button to the AppStateManager profile-save
+ * bridge and added clear status feedback so profile updates no longer use the
+ * placeholder save path.
  */
 
 package view;
@@ -18,6 +22,7 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import model.UserProfile;
+import service.ServiceResponse;
 import util.Calculator;
 
 public class ProfileScreen extends BaseScreen {
@@ -37,6 +42,7 @@ public class ProfileScreen extends BaseScreen {
     private RadioButton otherButton;
 
     private Label bmiLabel;
+    private Label saveStatusLabel;
 
     public ProfileScreen(
             AppStateManager stateManager,
@@ -189,6 +195,12 @@ public class ProfileScreen extends BaseScreen {
         grid.add(genderLabel, 0, 12);
         grid.add(genderBox, 0, 13);
 
+        // Save status label gives the user feedback after AppStateManager
+        // returns the real ServiceResponse from the service layer.
+        saveStatusLabel = new Label("");
+        saveStatusLabel.setWrapText(true);
+        grid.add(saveStatusLabel, 0, 14);
+
         // Buttons
 
         Button saveButton =
@@ -201,21 +213,8 @@ public class ProfileScreen extends BaseScreen {
             -fx-font-weight: bold;
             """);
         
-        saveButton.setOnAction(event -> { 
-        	// TODO:
-        	// add data validation, especially for the numbers
-        	
-        	UserProfile dataToSave = new UserProfile(
-        			profile.getUserId(),
-                    profile.getUsername(),
-                    firstNameField.getText(),
-                    lastNameField.getText(),
-                    Integer.parseInt(ageField.getText()),
-                    Double.parseDouble(heightField.getText()),
-                    Double.parseDouble(weightField.getText()),
-                    getSelectedGender());
-        	stateManager.saveProfile(dataToSave);
-        	updateBMILabel();
+        saveButton.setOnAction(event -> {
+            saveProfileChanges();
         });
 
         Button logoutButton =
@@ -285,6 +284,55 @@ public class ProfileScreen extends BaseScreen {
         addNavigationMenu(root);
 
         scene = new Scene(root, 1200, 800);
+    }
+
+    /*
+     * Saves the values currently entered on the profile screen.
+     *
+     * Builds a UserProfile object from the visible form fields.
+     * The screen needs to send real profile data to AppStateManager
+     * instead of printing the old placeholder message.
+     * This method parses number fields safely, sends the profile through
+     * stateManager.saveProfile, updates the local profile only on success, and
+     * displays the ServiceResponse message for the user.
+     */
+    private void saveProfileChanges() {
+        try {
+            UserProfile dataToSave = new UserProfile(
+                    profile.getUserId(),
+                    profile.getUsername(),
+                    firstNameField.getText(),
+                    lastNameField.getText(),
+                    Integer.parseInt(ageField.getText()),
+                    Double.parseDouble(heightField.getText()),
+                    Double.parseDouble(weightField.getText()),
+                    getSelectedGender());
+
+            ServiceResponse<Boolean> attempt =
+                    stateManager.saveProfile(dataToSave);
+
+            if (attempt.isSuccess()) {
+                profile = dataToSave;
+                updateBMILabel();
+                showSaveSuccess(attempt.getMessage());
+            } else {
+                showSaveError(attempt.getMessage());
+            }
+        } catch (NumberFormatException exception) {
+            showSaveError("Age, height, and weight must be valid numbers.");
+        }
+    }
+
+    // Shows a success message below the form controls.
+    private void showSaveSuccess(String message) {
+        saveStatusLabel.setText(message);
+        saveStatusLabel.setStyle("-fx-text-fill: #1E5AA8; -fx-font-weight: bold;");
+    }
+
+    // Shows an error message below the form controls.
+    private void showSaveError(String message) {
+        saveStatusLabel.setText(message);
+        saveStatusLabel.setStyle("-fx-text-fill: #B00020; -fx-font-weight: bold;");
     }
 
     private void loadProfileData() {
