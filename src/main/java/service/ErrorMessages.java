@@ -2,11 +2,11 @@
  * File: ErrorMessages.java
  * Project: FitFlow - Interactive Workout Assistant
  * Course: UMGC CMSC 495
- * Phase: Phase I Source Code
- * Week: 4
- * Version: v0.4.03
+ * Phase: Phase II Source Code
+ * Week: 6
+ * Version: v0.6.01
  * Author: David Lewis
- * Last Updated: 2026-06-07
+ * Last Updated: 2026-06-20
  *
  * Purpose:
  * Centralizes common success and error messages so frontend and backend
@@ -33,6 +33,7 @@ public final class ErrorMessages {
     public static final String SUCCESS_LOGOUT = "Logout successful.";
     public static final String SUCCESS_WORKOUTS_LOADED = "Exercise library loaded successfully.";
     public static final String SUCCESS_ROUTINE_SAVED = "Workout routine saved successfully.";
+    public static final String SUCCESS_PROFILE_SAVED = "Profile saved successfully.";
     public static final String SUCCESS_HISTORY_LOADED = "Workout history loaded successfully.";
     public static final String SUCCESS_CALORIES_CALCULATED = "Calories calculated successfully.";
     public static final String SUCCESS_RECOMMENDATION_CREATED = "Workout recommendation created successfully.";
@@ -49,6 +50,7 @@ public final class ErrorMessages {
     public static final String EXERCISE_LIST_REQUIRED = "At least one exercise must be selected.";
     public static final String INVALID_DURATION = "Workout duration must be greater than zero.";
     public static final String INVALID_HEIGHT_WEIGHT = "Height and weight must be greater than zero.";
+    public static final String INVALID_PROFILE = "Profile information is incomplete or invalid.";
     public static final String DATA_LOAD_FAILURE = "Data could not be loaded. Please try again.";
     public static final String DATA_SAVE_FAILURE = "Data could not be saved. Please try again.";
 
