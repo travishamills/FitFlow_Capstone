@@ -1,18 +1,24 @@
 /*
  * File: RoutineBuilderScreen.java
- * Version: 0.5.2
- * Date last edited: 6/15/2026
+ * Version: 0.6.1
+ * Date last edited: 6/20/2026
  * Original Author: Orange Snaer
  * Adapted by: Alex Ronn
- * File Purpose: This class builds the workout
- * 			routine builder.
+ * Modified by: David Lewis
+ * File Purpose: This class builds the workout routine builder screen.
+ * Update Notes: Wired the Save Routine popup to AppStateManager.saveRoutine.
+ * The screen now collects selected exercises from the routine panel, sends
+ * them through the application state manager, and displays the ServiceResponse
+ * message returned by the service layer.
  */
 
 package view;
 
+import java.util.ArrayList;
 import java.util.List;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -33,6 +39,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.scene.image.ImageView;
+import service.ServiceResponse;
 
 public class RoutineBuilderScreen extends BaseScreen {
 	
@@ -48,7 +55,7 @@ public class RoutineBuilderScreen extends BaseScreen {
     private  HBox centerExerciseList;
     private HBox bottomButtons;
     
-    // features in the overlay for saving
+    // Save-routine overlay fields used to name and submit a selected routine.
     private StackPane saveRoutineOverlay;
     private TextField routineNameField;
     private Label routineNameMessageLabel;
@@ -91,7 +98,7 @@ public class RoutineBuilderScreen extends BaseScreen {
         root.getChildren().add(primaryPane);
         addNavigationMenu(root);
         
-        //Add hidden overlay for name prompting
+        // Add hidden overlay for routine naming and service-layer saving.
         saveRoutineOverlay = createSaveRoutineOverlay();
 
         root.getChildren().add(
@@ -296,6 +303,10 @@ private ImageView ExerciseImage(String exerciseName) {
 
 private HBox RoutinePanel(String exerciseName) {
     HBox addedRoutnPanel = new HBox(20);
+
+    // Store the exercise name on the panel so the save logic can collect
+    // the selected routine without reading UI label text directly.
+    addedRoutnPanel.setUserData(exerciseName);
     //Set position
     addedRoutnPanel.setAlignment(Pos.CENTER);
     //Set padding/margin
@@ -468,6 +479,8 @@ private HBox BottomButtons(Stage stage) {
 
     saveRoutineButton.setOnAction(event -> {
 
+        // Open the save overlay fresh each time so old messages do not
+        // confuse the user after a previous save attempt.
         routineNameField.clear();
         routineNameMessageLabel.setText("");
         saveRoutineOverlay.setVisible(true);
@@ -504,7 +517,37 @@ private void startWorkout(Stage stage) {
     }
 
 
-// used to create an overlay prompting the user for a routine name
+/*
+ * Collects the exercises currently shown in the selected routine panel.
+ *
+ * What: Builds a list of exercise names from the routine items the user added.
+ * Why: The service layer needs clean routine data, not JavaFX controls.
+ * How: Each routine panel stores its exercise name in userData when created.
+ */
+private List<String> getSelectedExerciseNames() {
+
+    List<String> selectedExercises = new ArrayList<>();
+
+    for (Node node : addedRoutineListPanel.getChildren()) {
+        Object exerciseName = node.getUserData();
+
+        if (exerciseName instanceof String) {
+            selectedExercises.add((String) exerciseName);
+        }
+    }
+
+    return selectedExercises;
+}
+
+/*
+ * Creates the save-routine overlay used by the Save button.
+ *
+ * What: Prompts the user for a routine name and submits selected exercises.
+ * Why: Routine saving needs validation and service feedback before the user
+ * sees a success message.
+ * How: The popup validates the routine name, gets selected exercises, calls
+ * AppStateManager.saveRoutine, and displays the ServiceResponse message.
+ */
 private StackPane createSaveRoutineOverlay() {
 
     StackPane overlay = createOverlay();
@@ -584,18 +627,20 @@ private StackPane createSaveRoutineOverlay() {
             return;
         }
 
-        /*
-         * TODO:
-         * save routine
-         */
+        List<String> selectedExercises = getSelectedExerciseNames();
 
-        routineNameMessageLabel.setText(
-            "Routine saved."
-        );
+        // Send the routine through AppStateManager so the UI stays separated
+        // from FitFlowFacade and follows the project architecture.
+        ServiceResponse<Boolean> response =
+                stateManager.saveRoutine(routineName, selectedExercises);
 
-        routineNameMessageLabel.setTextFill(
-            Color.GREEN
-        );
+        routineNameMessageLabel.setText(response.getMessage());
+
+        if (response.isSuccess()) {
+            routineNameMessageLabel.setTextFill(Color.GREEN);
+        } else {
+            routineNameMessageLabel.setTextFill(Color.RED);
+        }
     });
 
     closeButton.setOnAction(event -> {
@@ -611,5 +656,3 @@ private StackPane createSaveRoutineOverlay() {
 }
 
 }
-
-
