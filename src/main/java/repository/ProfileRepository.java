@@ -1,13 +1,19 @@
 /*
  * File: ProfileRepository.java
  * Author: Michael Lee
+ * Updated: David Lewis
  * Project: FitFlow
- * Date: June 2026
- * Version: 1.0
+ * Date: June 21 2026 
+ * Version: 6.2
  * Description:
  * This file saves and loads user profiles.
  * I made this so profile data has its own repository instead of keeping
  * it inside CSVHelper.
+ *
+ * Update Notes:
+ * Updated profile lookup so the newest saved profile is returned when a
+ * user has more than one saved row in the CSV file. This lets the profile
+ * screen load the latest saved values instead of an older duplicate row.
  */
 
 package repository;
@@ -102,33 +108,43 @@ public class ProfileRepository {
     }
 
     /*
-     * Finds a profile by user ID.
+     * Finds the latest saved profile for one user ID.
+     *
+     * The current CSV approach appends profile saves instead of rewriting the
+     * whole file. Because of that, a user may have more than one profile row.
+     * This method keeps scanning and returns the last matching row, which is
+     * the newest saved profile in the append-only CSV file.
      */
     public UserProfile findProfileByUserId(String userId) {
         List<UserProfile> profiles = loadAllProfiles();
+        UserProfile latestProfile = null;
 
         for (UserProfile profile : profiles) {
             if (profile.getUserId().equals(userId)) {
-                return profile;
+                latestProfile = profile;
             }
         }
 
-        return null;
+        return latestProfile;
     }
 
     /*
-     * Finds a profile by username.
+     * Finds the latest saved profile for one username.
+     *
+     * This follows the same append-only rule as findProfileByUserId so profile
+     * screens show the newest saved data instead of the first old row.
      */
     public UserProfile findProfileByUsername(String username) {
         List<UserProfile> profiles = loadAllProfiles();
+        UserProfile latestProfile = null;
 
         for (UserProfile profile : profiles) {
             if (profile.getUsername().equalsIgnoreCase(username)) {
-                return profile;
+                latestProfile = profile;
             }
         }
 
-        return null;
+        return latestProfile;
     }
 
     /*
