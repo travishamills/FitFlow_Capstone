@@ -1,14 +1,16 @@
 /*
  * File: AppStateManager.java
- * Version: 0.6.2
- * Date last edited: 6/20/2026
+ * Version: 0.6.3
+ * Date last edited: 6/21/2026
  * Author: Alex Ronn
  * Modified by: David Lewis
  * File Purpose: Manages swapping between different pages in the application.
  * Update Notes: Added routine-save routing and profile-save routing so JavaFX
  * screens send save requests through AppStateManager before reaching
  * FitFlowFacade. This keeps the view layer separate from the service layer and
- * matches the team UML flow.
+ * matches the team UML flow. Updated profile loading so the profile screen now
+ * asks FitFlowFacade for the signed-in user's profile instead of creating a
+ * hardcoded John Smith test profile.
  */
 
 package view;
@@ -92,30 +94,25 @@ public class AppStateManager {
     }
     
     /**
-     * Shows the profile screen.
+     * Shows the profile screen for the signed-in user.
+     *
+     * The older Phase I version created a hardcoded John Smith profile just to
+     * prove the screen could open. That was useful for early UI testing, but it
+     * did not match the real login flow. This version asks FitFlowFacade for the
+     * profile tied to the current session token, then builds the screen from
+     * that returned UserProfile object.
      */
     public void showProfileScreen() {
-    	
-    	if (profileScreen == null) {
-    		UserProfile testUser =
-                    new UserProfile(
-                            "1",
-                            "jsmith",
-                            "John",
-                            "Smith",
-                            27,
-                            70,
-                            180,
-                            "Male"
-                    );
+        ServiceResponse<UserProfile> profileLoad = facade.getCurrentUserProfile(sessionToken);
 
-            profileScreen =
-                    new ProfileScreen(
-                            this,
-                            testUser
-                    );
-    	}
-    	
+        if (profileLoad.isSuccess()) {
+            profileScreen = new ProfileScreen(this, profileLoad.getData());
+        } else {
+            showLoginScreen();
+            loginScreen.showError(profileLoad.getMessage());
+            return;
+        }
+
         primaryStage.setScene(
         		profileScreen.getScene()
         );
