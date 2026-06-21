@@ -3,9 +3,10 @@
  * Project: FitFlow - Interactive Workout Assistant
  * Course: UMGC CMSC 495 Computer Science Capstone
  * Phase: Phase II Source Code
- * Version: v0.6.1
+ * Version: v0.6.2
  * Author: David Lewis
  * Created: 2026-06-20
+ * Last Updated: 2026-06-21
  *
  * Purpose:
  * Runs the integration and regression checks assigned to the team-lead/service
@@ -15,9 +16,10 @@
  * - Authentication validation: short username, short password, invalid email,
  *   valid signup, duplicate signup, valid signin, logout, and invalid sessions.
  * - Routine save regression: blank routine names, empty exercise lists, valid
- *   routine save, and saved-routine reload.
+ *   routine save, saved-routine reload, and CSV/repository reload from a new
+ *   facade instance.
  * - Profile save regression: incomplete profile data, invalid height/weight,
- *   invalid sessions, and a valid profile save.
+ *   invalid sessions, valid profile save, and current-user profile loading.
  * - Additional integration behavior: calorie calculation, workout history,
  *   recommendations, and password hashing.
  *
@@ -93,8 +95,8 @@ public class IntegrationRegressionTest {
      */
     private void runAllTests() throws Exception {
         System.out.println("=== FitFlow Integration and Regression Test Runner ===");
-        System.out.println("Date: 2026-06-20");
-        System.out.println("Focus: Parts 4-7 service routing, validation, sessions, routine save, profile save, and defect retest evidence");
+        System.out.println("Date: 2026-06-21");
+        System.out.println("Focus: service routing, validation, sessions, repository-backed routine/history saves, and current-user profile loading");
         System.out.println();
 
         testSignupValidationAndDuplicateProtection();
@@ -249,12 +251,22 @@ public class IntegrationRegressionTest {
         checkTrue("Routine save succeeds with name and selected exercises", saveRoutine.isSuccess());
         checkEquals("Routine save returns true", Boolean.TRUE, saveRoutine.getData());
 
-        // Saved data should be available through the facade after save.
+        // Saved data should be available through the same facade after save.
         // The saved routine list contains the routine name and selected exercise text.
         ServiceResponse<List<String>> savedRoutines = facade.getSavedRoutines(sessionToken);
         checkTrue("Saved routines reload succeeds", savedRoutines.isSuccess());
         checkTrue("Saved routine list includes Morning Starter", savedRoutines.getData().toString().contains("Morning Starter"));
         checkTrue("Saved routine list includes selected exercise", savedRoutines.getData().toString().contains("Squats"));
+
+        // A new facade instance simulates closing/reopening the service layer.
+        // If the routine was only stored in memory, this check would fail.
+        // Passing this proves saveWorkout wrote routine rows into the repository/CSV path.
+        FitFlowFacade restartedFacade = new FitFlowFacade();
+        String restartedSession = signInAndReturnToken(restartedFacade);
+        ServiceResponse<List<String>> persistedRoutines = restartedFacade.getSavedRoutines(restartedSession);
+        checkTrue("Repository-backed routine reload succeeds after facade restart", persistedRoutines.isSuccess());
+        checkTrue("CSV routine reload still includes Morning Starter", persistedRoutines.getData().toString().contains("Morning Starter"));
+        checkTrue("CSV routine reload still includes selected exercise", persistedRoutines.getData().toString().contains("Squats"));
         System.out.println();
     }
 
@@ -302,6 +314,24 @@ public class IntegrationRegressionTest {
         ServiceResponse<Boolean> validProfileResult = facade.saveProfile(sessionToken, validProfile);
         checkTrue("Valid profile save succeeds", validProfileResult.isSuccess());
         checkEquals("Valid profile save returns true", Boolean.TRUE, validProfileResult.getData());
+
+        // Load the current signed-in profile through the facade.
+        // This protects the AppStateManager profile screen flow because it now
+        // depends on getCurrentUserProfile instead of a hardcoded John Smith user.
+        ServiceResponse<UserProfile> loadedProfile = facade.getCurrentUserProfile(sessionToken);
+        checkTrue("Current user profile load succeeds", loadedProfile.isSuccess());
+        checkEquals("Loaded profile belongs to demo user", "USER-DEMO", loadedProfile.getData().getUserId());
+        checkEquals("Loaded profile uses saved first name", "David", loadedProfile.getData().getFirstName());
+        checkFalse("Loaded profile is not hardcoded John Smith", "John".equals(loadedProfile.getData().getFirstName())
+                && "Smith".equals(loadedProfile.getData().getLastName()));
+
+        // A new facade instance should still load the profile from CSV.
+        // This proves the profile screen can use durable repository data after restart.
+        FitFlowFacade restartedFacade = new FitFlowFacade();
+        String restartedSession = signInAndReturnToken(restartedFacade);
+        ServiceResponse<UserProfile> persistedProfile = restartedFacade.getCurrentUserProfile(restartedSession);
+        checkTrue("Repository-backed profile load succeeds after facade restart", persistedProfile.isSuccess());
+        checkEquals("Persisted profile keeps saved first name", "David", persistedProfile.getData().getFirstName());
         System.out.println();
     }
 
@@ -346,6 +376,15 @@ public class IntegrationRegressionTest {
         ServiceResponse<List<String>> historyLoad = facade.getWorkoutHistory(sessionToken);
         checkTrue("Workout history reload succeeds", historyLoad.isSuccess());
         checkTrue("Workout history contains saved summary", historyLoad.getData().toString().contains("Morning Starter completed"));
+
+        // Restart the facade and reload the demo user's history.
+        // If history was only stored in memory, this restarted instance would
+        // have an empty history list. Passing proves CSV/repository persistence.
+        FitFlowFacade restartedFacade = new FitFlowFacade();
+        String restartedSession = signInAndReturnToken(restartedFacade);
+        ServiceResponse<List<String>> persistedHistory = restartedFacade.getWorkoutHistory(restartedSession);
+        checkTrue("Repository-backed workout history reload succeeds after facade restart", persistedHistory.isSuccess());
+        checkTrue("CSV history reload contains saved summary", persistedHistory.getData().toString().contains("Morning Starter completed"));
 
         // Recommendation requests should return usable workout guidance.
         // Strength recommendation includes a push-focused suggestion in current baseline.
