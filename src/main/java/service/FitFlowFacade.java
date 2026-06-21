@@ -4,9 +4,9 @@
  * Course: UMGC CMSC 495
  * Phase: Phase II Source Code
  * Week: 6
- * Version: v0.6.01
+ * Version: v0.6.2
  * Author: David Lewis
- * Last Updated: 2026-06-20
+ * Last Updated: 2026-06-21
  *
  * Purpose:
  * Provides a central integration point between frontend controllers and
@@ -14,18 +14,24 @@
  * of directly accessing CSV repositories or lower-level backend classes.
  *
  * Dependencies:
- * ServiceResponse, ErrorMessages, ValidationUtil, UserProfile, CSVHelper,
- * Java Standard Library.
+ * ServiceResponse, ErrorMessages, ValidationUtil, UserProfile, WorkoutRoutine,
+ * WorkoutHistory, ProfileRepository, WorkoutRoutineRepository,
+ * WorkoutHistoryRepository, Java Standard Library.
  *
  * Update Notes:
- * Added saveProfile so AppStateManager can route profile updates through the
- * service layer instead of leaving ProfileScreen with a placeholder save path.
+ * Added repository-backed routine/history persistence and current-user
+ * profile loading so screens no longer rely on memory-only data or hardcoded
+ * profile records.
  *
  */
 package service;
 
 import model.UserProfile;
-import repository.CSVHelper;
+import model.WorkoutHistory;
+import model.WorkoutRoutine;
+import repository.ProfileRepository;
+import repository.WorkoutHistoryRepository;
+import repository.WorkoutRoutineRepository;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -46,6 +52,9 @@ public class FitFlowFacade {
     private final Map<String, List<String>> routinesByUserId;
     private final Map<String, List<String>> historyByUserId;
     private final List<String> exerciseLibrary;
+    private final ProfileRepository profileRepository;
+    private final WorkoutRoutineRepository workoutRoutineRepository;
+    private final WorkoutHistoryRepository workoutHistoryRepository;
 
     /**
      * Creates the facade and loads Phase I starter data.
@@ -56,6 +65,9 @@ public class FitFlowFacade {
         routinesByUserId = new HashMap<String, List<String>>();
         historyByUserId = new HashMap<String, List<String>>();
         exerciseLibrary = new ArrayList<String>();
+        profileRepository = new ProfileRepository();
+        workoutRoutineRepository = new WorkoutRoutineRepository();
+        workoutHistoryRepository = new WorkoutHistoryRepository();
 
         loadStarterExercises();
         createDemoUser();
@@ -185,6 +197,31 @@ public class FitFlowFacade {
             routinesByUserId.put(userId, userRoutines);
         }
 
+        /*
+         * The routine builder currently sends a routine name and a list of
+         * selected exercise names. The repository stores one CSV row per
+         * exercise because WorkoutRoutine represents one exercise entry inside
+         * a routine. This keeps the UI simple while still making the save
+         * durable in data/workout_routines.csv. Default sets/reps/duration/rest
+         * values are used until the UI passes those detailed values separately.
+         */
+        String routineId = "ROUTINE-" + UUID.randomUUID().toString();
+        for (String exerciseName : exerciseNames) {
+            if (!ValidationUtil.isBlank(exerciseName)) {
+                WorkoutRoutine routine = new WorkoutRoutine(
+                        routineId,
+                        userId,
+                        routineName.trim(),
+                        exerciseName.trim(),
+                        1,
+                        0,
+                        60,
+                        30
+                );
+                workoutRoutineRepository.saveWorkoutRoutine(routine);
+            }
+        }
+
         String routineRecord = routineName.trim() + " -> " + exerciseNames.toString();
         userRoutines.add(routineRecord);
 
@@ -203,13 +240,28 @@ public class FitFlowFacade {
         }
 
         String userId = activeSessions.get(sessionToken);
-        List<String> routines = routinesByUserId.get(userId);
+        List<String> routines = new ArrayList<String>();
 
-        if (routines == null) {
-            routines = new ArrayList<String>();
+        /*
+         * Load durable CSV records first so saved routines are still available
+         * after a facade restart. The in-memory list is only kept as a fallback
+         * for older Phase I test paths that saved simple display strings.
+         */
+        List<WorkoutRoutine> savedRoutineRows = workoutRoutineRepository.loadWorkoutRoutinesByUser(userId);
+        for (WorkoutRoutine routine : savedRoutineRows) {
+            routines.add(routine.getRoutineName() + " -> " + routine.getExerciseName());
         }
 
-        return ServiceResponse.success("Saved workout routines loaded successfully.", new ArrayList<String>(routines));
+        List<String> memoryRoutines = routinesByUserId.get(userId);
+        if (memoryRoutines != null) {
+            for (String routine : memoryRoutines) {
+                if (!routines.contains(routine)) {
+                    routines.add(routine);
+                }
+            }
+        }
+
+        return ServiceResponse.success("Saved workout routines loaded successfully.", routines);
     }
 
     /**
@@ -240,8 +292,68 @@ public class FitFlowFacade {
             return ServiceResponse.error(ErrorMessages.INVALID_PROFILE, ErrorMessages.CODE_VALIDATION);
         }
 
-        CSVHelper.saveProfile(profileData);
+        String userId = activeSessions.get(sessionToken);
+        UserAccount account = findAccountByUserId(userId);
+        String username = account == null ? profileData.getUsername() : account.username;
+
+        /*
+         * Save a profile tied to the active session instead of trusting a user ID
+         * that came from the screen. This prevents one logged-in user from
+         * accidentally saving profile data under another user's ID.
+         */
+        UserProfile sessionProfile = new UserProfile(
+                userId,
+                username,
+                profileData.getFirstName(),
+                profileData.getLastName(),
+                profileData.getAge(),
+                profileData.getHeight(),
+                profileData.getWeight(),
+                profileData.getGender()
+        );
+
+        profileRepository.saveProfile(sessionProfile);
         return ServiceResponse.success(ErrorMessages.SUCCESS_PROFILE_SAVED, Boolean.TRUE);
+    }
+
+    /**
+     * Loads the profile for the currently signed-in user.
+     *
+     * If a saved CSV profile exists, that profile is returned. If this is the
+     * user's first visit to the profile page, the facade creates a safe starter
+     * profile from the active account instead of letting AppStateManager use a
+     * hardcoded test user.
+     *
+     * @param sessionToken Active session token.
+     * @return ServiceResponse containing the current user's profile.
+     */
+    public ServiceResponse<UserProfile> getCurrentUserProfile(String sessionToken) {
+        if (!isValidSession(sessionToken)) {
+            return ServiceResponse.error(ErrorMessages.SESSION_EXPIRED, ErrorMessages.CODE_SESSION);
+        }
+
+        String userId = activeSessions.get(sessionToken);
+        UserProfile savedProfile = profileRepository.findProfileByUserId(userId);
+
+        if (savedProfile != null) {
+            return ServiceResponse.success("Profile loaded successfully.", savedProfile);
+        }
+
+        UserAccount account = findAccountByUserId(userId);
+        String username = account == null ? "user" : account.username;
+
+        UserProfile starterProfile = new UserProfile(
+                userId,
+                username,
+                "",
+                "",
+                18,
+                70,
+                180,
+                ""
+        );
+
+        return ServiceResponse.success("Starter profile loaded successfully.", starterProfile);
     }
 
     /**
@@ -273,7 +385,19 @@ public class FitFlowFacade {
             historyByUserId.put(userId, userHistory);
         }
 
-        userHistory.add(LocalDateTime.now() + " | " + workoutSummary + " | " + durationSeconds + " seconds");
+        String completedDate = LocalDateTime.now().toString();
+        double estimatedCalories = (durationSeconds / 60.0) * 7.0;
+        WorkoutHistory historyRecord = new WorkoutHistory(
+                "HISTORY-" + UUID.randomUUID().toString(),
+                userId,
+                workoutSummary.trim(),
+                completedDate,
+                durationSeconds,
+                estimatedCalories
+        );
+
+        workoutHistoryRepository.saveWorkoutHistory(historyRecord);
+        userHistory.add(completedDate + " | " + workoutSummary.trim() + " | " + durationSeconds + " seconds");
         return ServiceResponse.success("Workout history saved successfully.", Boolean.TRUE);
     }
 
@@ -289,13 +413,33 @@ public class FitFlowFacade {
         }
 
         String userId = activeSessions.get(sessionToken);
-        List<String> history = historyByUserId.get(userId);
+        List<String> history = new ArrayList<String>();
 
-        if (history == null) {
-            history = new ArrayList<String>();
+        /*
+         * Load from the repository first so history survives beyond the current
+         * facade instance. In-memory history remains a short-term fallback for
+         * current-session display strings and older test paths.
+         */
+        List<WorkoutHistory> savedHistoryRows = workoutHistoryRepository.loadWorkoutHistoryByUser(userId);
+        for (WorkoutHistory savedHistory : savedHistoryRows) {
+            history.add(savedHistory.getCompletedDate()
+                    + " | " + savedHistory.getRoutineName()
+                    + " | " + savedHistory.getDuration()
+                    + " seconds | "
+                    + savedHistory.getEstimatedCalories()
+                    + " calories");
         }
 
-        return ServiceResponse.success(ErrorMessages.SUCCESS_HISTORY_LOADED, new ArrayList<String>(history));
+        List<String> memoryHistory = historyByUserId.get(userId);
+        if (memoryHistory != null) {
+            for (String entry : memoryHistory) {
+                if (!history.contains(entry)) {
+                    history.add(entry);
+                }
+            }
+        }
+
+        return ServiceResponse.success(ErrorMessages.SUCCESS_HISTORY_LOADED, history);
     }
 
     /**
@@ -390,6 +534,26 @@ public class FitFlowFacade {
         usersByUsername.put("demo", demo);
         routinesByUserId.put("USER-DEMO", new ArrayList<String>());
         historyByUserId.put("USER-DEMO", new ArrayList<String>());
+    }
+
+    /**
+     * Finds an internal account record by user ID.
+     *
+     * Session maps store user IDs, while account records are keyed by username.
+     * This helper bridges those two maps when the facade needs the current
+     * username for profile loading or profile saving.
+     *
+     * @param userId user ID from the active session map.
+     * @return matching UserAccount, or null when no account is found.
+     */
+    private UserAccount findAccountByUserId(String userId) {
+        for (UserAccount account : usersByUsername.values()) {
+            if (account.userId.equals(userId)) {
+                return account;
+            }
+        }
+
+        return null;
     }
 
     /**
