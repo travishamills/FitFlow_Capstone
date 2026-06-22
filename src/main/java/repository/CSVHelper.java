@@ -1,32 +1,30 @@
+/*
+ * File: CSVHelper.java
+ * Author: Michael Lee
+ * Course: CMSC 495
+ * Project: FitFlow
+ * Date: June 2026
+ * Version: 1.1
+ *
+ * Description:
+ * This file handles simple CSV saving for the backend.
+ */
+
 package repository;
 
 import model.UserProfile;
 import model.WorkoutRoutine;
 import model.WorkoutHistory;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-
-/*
- * File: CSVHelper.java
- * Author: Michael Lee
- * Project: FitFlow
- * Date: June 8, 2026
- * Version: 1.1
- * Description:
- * This file handles the CSV saving part of the backend.
- * I use this class to save profiles, workout routines, and workout history
- * into the data folder so the information does not only stay in the program.
- */
-
 public class CSVHelper {
 
     /*
-     * This method makes sure the data folder exists before anything gets saved.
-     * If the folder is already there, nothing really changes.
-     * If it is missing, the program creates it automatically.
+     * Makes sure the data folder exists before saving files.
      */
     private static void makeSureDataFolderExists() {
         try {
@@ -37,9 +35,7 @@ public class CSVHelper {
     }
 
     /*
-     * This method saves a user profile into profiles.csv.
-     * It first checks that the data folder exists, then it adds the profile
-     * information as a new line in the CSV file.
+     * Saves one user profile to profiles.csv.
      */
     public static void saveProfile(UserProfile profile) {
         makeSureDataFolderExists();
@@ -56,8 +52,7 @@ public class CSVHelper {
     }
 
     /*
-     * This method saves a workout routine into workout_routines.csv.
-     * It is used after a routine is created and checked as valid.
+     * Saves one workout routine to workout_routines.csv.
      */
     public static void saveWorkoutRoutine(WorkoutRoutine routine) {
         makeSureDataFolderExists();
@@ -74,8 +69,7 @@ public class CSVHelper {
     }
 
     /*
-     * This method saves a completed workout record into workout_history.csv.
-     * This helps keep track of workouts that the user has finished.
+     * Saves one completed workout to workout_history.csv.
      */
     public static void saveWorkoutHistory(WorkoutHistory history) {
         makeSureDataFolderExists();
