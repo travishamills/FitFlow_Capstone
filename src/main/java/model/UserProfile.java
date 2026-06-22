@@ -1,47 +1,32 @@
 /*
  * File: UserProfile.java
- * Version: 0.4.2
- * Date last edited: 6/6/2026
- * Original Author: Michael Lee
- * Adapted by: Alex Ronn, Travisha Mills
- * Purpose:
- * Represents one user's profile information.
+ * Author: Michael Lee
+ * Contributors: Alex Ronn, Travisha Mills
+ * Course: CMSC 495
+ * Project: FitFlow
+ * Date: June 2026
+ * Version: 1.1
  *
- * This class combines the frontend profile fields
- * with the backend workout-related fields so the whole
- * application uses one shared UserProfile model.
+ * Description:
+ * This file stores profile information for one FitFlow user.
  */
 
 package model;
 
 public class UserProfile {
 
-    // Unique identifier for the user.
+    // Basic user profile details
     private String userId;
-
-    // Username used for login.
     private String username;
-
-    // User's first name.
     private String firstName;
-
-    // User's last name.
     private String lastName;
-
-    // User's age.
     private int age;
-
-    // User's height.
     private double height;
-
-    // User's weight.
     private double weight;
-
-    // User's selected gender.
     private String gender;
 
-    /**
-     * Creates a user profile.
+    /*
+     * Creates a user profile with the main profile details.
      */
     public UserProfile(
             String userId,
@@ -63,81 +48,108 @@ public class UserProfile {
         this.gender = gender;
     }
 
-    // Returns the user's ID.
+    /*
+     * Gets the user's ID.
+     */
     public String getUserId() {
         return userId;
     }
 
-    // Returns the username.
+    /*
+     * Gets the username.
+     */
     public String getUsername() {
         return username;
     }
 
-    // Returns the first name.
+    /*
+     * Gets the first name.
+     */
     public String getFirstName() {
         return firstName;
     }
 
-    // Returns the last name.
+    /*
+     * Gets the last name.
+     */
     public String getLastName() {
         return lastName;
     }
 
-    // Returns the age.
+    /*
+     * Gets the user's age.
+     */
     public int getAge() {
         return age;
     }
 
-    // Returns the height.
+    /*
+     * Gets the user's height.
+     */
     public double getHeight() {
         return height;
     }
 
-    // Returns the weight.
+    /*
+     * Gets the user's weight.
+     */
     public double getWeight() {
         return weight;
     }
 
-    // Returns the gender.
+    /*
+     * Gets the user's gender.
+     */
     public String getGender() {
         return gender;
     }
 
-    // Updates first name.
+    /*
+     * Updates the first name.
+     */
     public void setFirstName(String firstName) {
         this.firstName = firstName;
     }
 
-    // Updates last name.
+    /*
+     * Updates the last name.
+     */
     public void setLastName(String lastName) {
         this.lastName = lastName;
     }
 
-    // Updates age.
+    /*
+     * Updates the age.
+     */
     public void setAge(int age) {
         this.age = age;
     }
 
-    // Updates height.
+    /*
+     * Updates the height.
+     */
     public void setHeight(double height) {
         this.height = height;
     }
 
-    // Updates weight.
+    /*
+     * Updates the weight.
+     */
     public void setWeight(double weight) {
         this.weight = weight;
     }
 
-    // Updates gender.
+    /*
+     * Updates the gender.
+     */
     public void setGender(String gender) {
         this.gender = gender;
     }
 
-    /**
-     * Converts profile information into CSV format.
+    /*
+     * Turns the profile into one CSV row.
      */
     public String toCSV() {
-
         return userId + "," +
                 username + "," +
                 firstName + "," +
@@ -148,12 +160,11 @@ public class UserProfile {
                 gender;
     }
 
-    /**
-     * Returns a readable profile summary.
+    /*
+     * Shows the profile in a simple readable way.
      */
     @Override
     public String toString() {
-
         return "User: " + username +
                 "\nFirst Name: " + firstName +
                 "\nLast Name: " + lastName +
