@@ -1,188 +1,168 @@
-//Draft 
-
 /*
  * File: DashboardScreen.java
  * Project: FitFlow - Interactive Workout Assistant
  * Course: UMGC CMSC 495
- * Week: 5
- * Version: v0.5.1
+ * Week: 6
+ * Version: v0.6.3
  * Author: Orange Snaer
- * Adapted by: Alex Ronn
- *  /
-
-/*Purpose: This class is a the dashboard page where it will be the main home screen
-of the other pages that would help for a smooth navigation between screens.
-This class gives user an information or data of their workout progress,
-workout schedule they set.*/
+ * Adapted and later redesigned by: Alex Ronn
+ *
+ * File Purpose: Main navigation hub shown after login. Provides styled
+ *      buttons to reach each major screen in the application.
+ */
 
 package view;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
+import javafx.scene.control.Separator;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
-
 public class DashboardScreen extends BaseScreen {
 
-    private BorderPane root;
     private Scene scene;
 
     public DashboardScreen(AppStateManager stateManager) {
-    	super(stateManager);
-    	createScene();
+        super(stateManager);
+        buildScreen();
     }
 
+    private void buildScreen() {
 
-    private void createScene() {
+        StackPane root = createRootLayout();
 
-        //Create dashboard layout
-        GridPane dashboard = dashboard();
+        StackPane card = createCard(380, 620);
 
-        //added
-        StackPane rootLayout = createRootLayout();
+        VBox content = createCardContent();
+        content.setSpacing(0);
 
-        //main layout of the screen using borderpane
-        root = new BorderPane();
-        //Set position
-        root.setCenter(dashboard);
+        // Header
 
-        //added
-        rootLayout.getChildren().add(root);
+        Label logoPlaceholder = new Label("LOGO");
+        logoPlaceholder.setMinSize(100, 100);
+        logoPlaceholder.setMaxSize(100, 100);
+        logoPlaceholder.setAlignment(Pos.CENTER);
+        logoPlaceholder.setStyle("""
+            -fx-background-color: lightgray;
+            -fx-background-radius: 50;
+            -fx-border-radius: 50;
+            -fx-alignment: center;
+            """);
 
-        addNavigationMenu(rootLayout);
+        Label appName = new Label("FitFlow");
+        appName.setFont(Font.font("Segoe UI", FontWeight.BOLD, 30));
+        appName.setTextFill(Color.web("#1E5AA8"));
 
-        scene = new Scene(rootLayout, 1000, 700);
+        Label appSubtitle = new Label("Interactive Workout Assistant");
+        appSubtitle.setFont(Font.font("Segoe UI", 13));
+        appSubtitle.setTextFill(Color.web("#666666"));
 
-        //return new Scene(root);
+        VBox headerBlock = new VBox(8, logoPlaceholder, appName, appSubtitle);
+        headerBlock.setAlignment(Pos.CENTER);
+        headerBlock.setPadding(new Insets(10, 0, 28, 0));
+
+        // Divider label 
+
+        Label sectionLabel = new Label("NAVIGATE TO");
+        sectionLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
+        sectionLabel.setTextFill(Color.web("#AAAAAA"));
+        sectionLabel.setPadding(new Insets(0, 0, 8, 4));
+
+        // Navigation buttons 
+
+        Button profileButton      = createNavButton("Profile");
+        Button builderButton      = createNavButton("Workout Builder");
+        Button historyButton      = createNavButton("Workout History");
+        Button timerButton        = createNavButton("Interval Timer");
+
+        profileButton.setOnAction(event ->
+                stateManager.showProfileScreen());
+
+        builderButton.setOnAction(event ->
+                stateManager.showRoutineBuilderScreen());
+
+        historyButton.setOnAction(event ->
+                stateManager.showWorkoutHistoryScreen());
+
+        /*
+        timerButton.setOnAction(event ->
+                stateManager.showIntervalTimerScreen());
+        */
+
+        VBox navButtons = new VBox(10,
+                profileButton,
+                builderButton,
+                historyButton,
+                timerButton
+        );
+        navButtons.setPadding(new Insets(0, 0, 20, 0));
+
+        // Separator + logout
+
+        Separator separator = new Separator();
+        separator.setPadding(new Insets(8, 0, 8, 0));
+
+        Button logoutButton = createNavButton("Log Out");
+        logoutButton.setStyle(logoutButton.getStyle() +
+                "-fx-background-color: #B00020;");
+
+        logoutButton.setOnAction(event ->
+                stateManager.logOut());
+
+        // Assemble 
+
+        content.getChildren().addAll(
+                headerBlock,
+                sectionLabel,
+                navButtons,
+                separator,
+                logoutButton
+        );
+
+        card.getChildren().add(content);
+        root.getChildren().add(card);
+
+        scene = new Scene(root, 1200, 800);
     }
 
+    private Button createNavButton(String label) {
 
+        Button button = new Button(label);
 
-    private GridPane dashboard() {
-        String currentCaloriesBurned = "300 kcal";
-        String currentWrkoutDuration = "30 mins";
+        button.setMaxWidth(Double.MAX_VALUE);
+        button.setPrefHeight(46);
 
-        //Set the current workout status of the day on the screen with a spacing of 40
-        HBox workoutStats = new HBox(40, currentStatusWrkout("Calories Burned", currentCaloriesBurned),
-                                         currentStatusWrkout("Duration", currentWrkoutDuration));
+        button.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
 
-        GridPane grid = new GridPane();
+        button.setStyle("""
+            -fx-background-color: #1E5AA8;
+            -fx-text-fill: white;
+            -fx-background-radius: 10;
+            -fx-font-family: "Segoe UI";
+            -fx-font-size: 14;
+            -fx-font-weight: bold;
+            -fx-padding: 10 20 10 20;
+            -fx-cursor: hand;
+            -fx-alignment: CENTER_LEFT;
+            """);
 
-        //Space between panels
-        //grid.setHgap(20);
-        grid.setVgap(20);
+        button.setOnMouseEntered(e -> button.setStyle(button.getStyle()
+                .replace("#1E5AA8", "#2668C2")));
 
-        //Space from screen edges
-        grid.setPadding(new Insets(20));
+        button.setOnMouseExited(e -> button.setStyle(button.getStyle()
+                .replace("#2668C2", "#1E5AA8")));
 
-        //Set the panels to the center
-        grid.setAlignment(Pos.CENTER);
-
-        //Panels like recommendations, etc. position set on screen
-        grid.add(workoutStats, 0, 1);
-        grid.add(reminderPanel(), 0, 2);
-
-        return grid;
+        return button;
     }
 
-    private VBox reminderPanel() {
-        //need to link the calendar
-
-        VBox reminders = new VBox();
-        //apply the styles from the PanelStyle
-        PanelStyle(reminders, "UPCOMING WORKOUT");
-
-        //Labels
-        Label schedTimeDate = new Label("Date & Time: ");
-        Label schedWorkout = new Label("Exercise list: ");
-        Label exerciseName = new Label("Push up");
-        Label categoryName = new Label("Core");
-        Label duration = new Label("3 mins");
-
-        //Display the labels on panel
-        VBox label = new VBox(exerciseName, categoryName, duration);
-
-        //Display the labels on the panel
-        reminders.getChildren().addAll(schedTimeDate,schedWorkout, label);
-
-        return reminders;
-    }
-
-
-    private VBox currentStatusWrkout(String title, String value) {
-
-        VBox panelStatus = new VBox(10);
-        //Set alignment to center
-        panelStatus.setAlignment(Pos.CENTER);
-        //Padding set to not touch the edge
-        panelStatus.setPadding(new Insets(15));
-        //panel size
-        panelStatus.setPrefSize(180, 120);
-
-        //Background color of the main screen
-        BackgroundFill workoutStatusBckgrnd = new BackgroundFill(Color.WHITE, new CornerRadii(10), Insets.EMPTY);
-        Background backgroundStat = new Background(workoutStatusBckgrnd);
-        panelStatus.setBackground(backgroundStat);
-
-        //Title
-        Label titleLabel = new Label(title);
-        //Set font style weeight and size
-        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-
-        //Workout status data workout duration in minutes and calorie burned in kcal
-        Label goalData = new Label(value);
-        //Set fontstyle and size
-        goalData.setFont(Font.font("Arial", 24));
-
-        panelStatus.getChildren().addAll(titleLabel, goalData);
-
-        return panelStatus;
-    }
-
-    //panels style shared amongst the panels recommendation, reminder, etc.
-    private void PanelStyle(VBox panel, String titleText) {
-
-        //Set panels size
-        panel.setPrefSize(400, 250);
-
-        //Set background color for all panels
-        BackgroundFill createPanelBackgrnd = new BackgroundFill(Color.WHITE, new CornerRadii(10),Insets.EMPTY);
-        Background backgroundPanel = new Background(createPanelBackgrnd);
-        panel.setBackground(backgroundPanel);
-
-        //Set margins to not touch the egde
-        panel.setPadding(new Insets(15));
-
-
-        //set vertical spacing
-        panel.setSpacing(25);
-
-        //set style label for all panels for consistency
-        Label title = new Label(titleText);
-
-        //set font size and weight for emphasis
-        title.setFont(Font.font("Arial", FontWeight.BOLD, 12));
-
-        panel.getChildren().add(title);
-    }
-    
     public Scene getScene() {
         return scene;
     }
-
 }
-
-
-

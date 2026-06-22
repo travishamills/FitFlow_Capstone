@@ -214,6 +214,11 @@ public abstract class BaseScreen {
         styleNavigationButton(timerButton);
         styleNavigationButton(logoutButton);
         
+        // change logout to red
+        
+        logoutButton.setStyle(logoutButton.getStyle()
+                .replace("#1E5AA8", "#B00020"));
+        
         // Bind button actions, some disabled until implemented
 
         profileButton.setOnAction(event ->
