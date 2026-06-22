@@ -502,18 +502,42 @@ private HBox BottomButtons(Stage stage) {
     return buttons;
 }
 
-private void startWorkout(Stage stage) {
-    BorderPane guidedWorkout = new BorderPane();
-    //title
-    Label title = new Label("Guided workout sample page");
-    //set fontstyle
-    title.setFont(Font.font("Arial", FontWeight.BOLD, 30));
+// Connects start exercise button to backend
+    private void startWorkout(Stage stage) {
+        // Collects the selected exercises before starting the guided workout.
+        List<String> selectedExercises = getSelectedExerciseNames();
 
-    guidedWorkout.setCenter(title);
+        // Starts the backend guided workout timer with default exercise and rest times.
+        ServiceResponse<?> response = stateManager.startGuidedWorkout(
+                "Guided Workout",
+                selectedExercises,
+                60,
+                30
+        );
 
-    Scene workoutScene = new Scene(guidedWorkout, 1280, 800);
+        if (!response.isSuccess()) {
+            routineNameMessageLabel.setText(response.getMessage());
+            routineNameMessageLabel.setTextFill(Color.RED);
+            saveRoutineOverlay.setVisible(true);
+            return;
+        }
 
-    stage.setScene(workoutScene);
+        BorderPane guidedWorkout = new BorderPane();
+
+        Label title = new Label("Guided Workout Started");
+        title.setFont(Font.font("Arial", FontWeight.BOLD, 30));
+
+        Label subtitle = new Label("Timer backend is now running.");
+        subtitle.setFont(Font.font("Arial", FontWeight.NORMAL, 18));
+
+        VBox content = new VBox(20, title, subtitle);
+        content.setAlignment(Pos.CENTER);
+
+        guidedWorkout.setCenter(content);
+
+        Scene workoutScene = new Scene(guidedWorkout, 1280, 800);
+
+        stage.setScene(workoutScene);
     }
 
 

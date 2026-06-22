@@ -42,7 +42,7 @@ public final class ErrorMessages {
     public static final String PASSWORD_REQUIRED = "Password is required.";
     public static final String EMAIL_REQUIRED = "Email is required.";
     public static final String INVALID_EMAIL = "Email must contain @ and a valid domain.";
-    public static final String PASSWORD_TOO_SHORT = "Password must be at least 6 characters.";
+    public static final String PASSWORD_TOO_SHORT = "Password must be at least 12 characters and include at least 1 number.";
     public static final String INVALID_LOGIN = "Invalid username or password.";
     public static final String USER_ALREADY_EXISTS = "A user with this username already exists.";
     public static final String SESSION_EXPIRED = "Session expired or invalid. Please log in again.";

@@ -52,10 +52,13 @@ public final class ValidationUtil {
      * Validates a password for Phase I requirements.
      *
      * @param password Password entered by the user.
-     * @return true if password meets the minimum length requirement.
+     * @return true if password meets the minimum length requirement and number.
      */
     public static boolean isValidPassword(String password) {
-        return password != null && password.length() >= 6;
+        // Password must be at least 12 characters and contain one number.
+        return password != null
+                && password.length() >= 12
+                && password.matches(".*\\d.*");
     }
 
     /**

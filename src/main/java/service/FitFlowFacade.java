@@ -29,9 +29,11 @@ package service;
 import model.UserProfile;
 import model.WorkoutHistory;
 import model.WorkoutRoutine;
+import model.WorkoutSession;
 import repository.ProfileRepository;
 import repository.WorkoutHistoryRepository;
 import repository.WorkoutRoutineRepository;
+import repository.UserAccountRepository;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -55,6 +57,8 @@ public class FitFlowFacade {
     private final ProfileRepository profileRepository;
     private final WorkoutRoutineRepository workoutRoutineRepository;
     private final WorkoutHistoryRepository workoutHistoryRepository;
+    private final TimerService timerService;
+    private final UserAccountRepository userAccountRepository;
 
     /**
      * Creates the facade and loads Phase I starter data.
@@ -68,7 +72,10 @@ public class FitFlowFacade {
         profileRepository = new ProfileRepository();
         workoutRoutineRepository = new WorkoutRoutineRepository();
         workoutHistoryRepository = new WorkoutHistoryRepository();
+        timerService = new TimerService();
+        userAccountRepository = new UserAccountRepository();
 
+        loadSavedUsers();
         loadStarterExercises();
         createDemoUser();
     }
@@ -104,6 +111,15 @@ public class FitFlowFacade {
         UserAccount account = new UserAccount(userId, normalizedUsername, hashPassword(password), email.trim(), LocalDateTime.now());
 
         usersByUsername.put(normalizedUsername, account);
+        userAccountRepository.saveUser(
+                new UserAccountRepository.AccountRecord(
+                        userId,
+                        normalizedUsername,
+                        account.passwordHash,
+                        account.email,
+                        account.createdAt
+                )
+        );
         routinesByUserId.put(userId, new ArrayList<String>());
         historyByUserId.put(userId, new ArrayList<String>());
 
@@ -503,6 +519,98 @@ public class FitFlowFacade {
                 "Recommended: follow a balanced routine using all five starter exercises.");
     }
 
+    public ServiceResponse<WorkoutSession> startGuidedWorkout(String sessionToken,
+                                                              String routineName,
+                                                              List<String> exercises,
+                                                              int exerciseDurationSeconds,
+                                                              int restDurationSeconds) {
+        // Checks the login session before starting a guided workout.
+        if (!isValidSession(sessionToken)) {
+            return ServiceResponse.error(ErrorMessages.SESSION_EXPIRED, ErrorMessages.CODE_SESSION);
+        }
+
+        return timerService.startWorkout(routineName, exercises, exerciseDurationSeconds, restDurationSeconds);
+    }
+
+    public ServiceResponse<WorkoutSession> pauseGuidedWorkout(String sessionToken) {
+        // Checks the login session before pausing the workout.
+        if (!isValidSession(sessionToken)) {
+            return ServiceResponse.error(ErrorMessages.SESSION_EXPIRED, ErrorMessages.CODE_SESSION);
+        }
+
+        return timerService.pauseWorkout();
+    }
+
+    public ServiceResponse<WorkoutSession> resumeGuidedWorkout(String sessionToken) {
+        // Checks the login session before resuming the workout.
+        if (!isValidSession(sessionToken)) {
+            return ServiceResponse.error(ErrorMessages.SESSION_EXPIRED, ErrorMessages.CODE_SESSION);
+        }
+
+        return timerService.resumeWorkout();
+    }
+
+    public ServiceResponse<WorkoutSession> resetGuidedWorkout(String sessionToken) {
+        // Checks the login session before resetting the workout.
+        if (!isValidSession(sessionToken)) {
+            return ServiceResponse.error(ErrorMessages.SESSION_EXPIRED, ErrorMessages.CODE_SESSION);
+        }
+
+        return timerService.resetWorkout();
+    }
+
+    public ServiceResponse<WorkoutSession> skipGuidedWorkoutStep(String sessionToken) {
+        // Checks the login session before skipping the current step.
+        if (!isValidSession(sessionToken)) {
+            return ServiceResponse.error(ErrorMessages.SESSION_EXPIRED, ErrorMessages.CODE_SESSION);
+        }
+
+        return timerService.skipCurrentStep();
+    }
+
+    public ServiceResponse<WorkoutSession> tickGuidedWorkout(String sessionToken) {
+        // Checks the login session before updating the timer.
+        if (!isValidSession(sessionToken)) {
+            return ServiceResponse.error(ErrorMessages.SESSION_EXPIRED, ErrorMessages.CODE_SESSION);
+        }
+
+        return timerService.tickWorkout();
+    }
+
+    public ServiceResponse<WorkoutSession> getCurrentWorkoutSession(String sessionToken) {
+        // Checks the login session before returning workout timer state.
+        if (!isValidSession(sessionToken)) {
+            return ServiceResponse.error(ErrorMessages.SESSION_EXPIRED, ErrorMessages.CODE_SESSION);
+        }
+
+        return timerService.getCurrentSession();
+    }
+
+    public ServiceResponse<Boolean> saveCompletedGuidedWorkout(String sessionToken) {
+        // Saves completed guided workout results into workout history.
+        if (!isValidSession(sessionToken)) {
+            return ServiceResponse.error(ErrorMessages.SESSION_EXPIRED, ErrorMessages.CODE_SESSION);
+        }
+
+        ServiceResponse<WorkoutSession> sessionResponse = timerService.getCurrentSession();
+
+        if (!sessionResponse.isSuccess()) {
+            return ServiceResponse.error(sessionResponse.getMessage(), sessionResponse.getErrorCode());
+        }
+
+        WorkoutSession session = sessionResponse.getData();
+
+        if (!session.isCompleted()) {
+            return ServiceResponse.error("Workout must be complete before saving history.", ErrorMessages.CODE_VALIDATION);
+        }
+
+        return saveWorkoutHistory(
+                sessionToken,
+                session.getCompletionSummary(),
+                session.getTotalElapsedSeconds()
+        );
+    }
+
     /**
      * Checks whether a session token exists.
      *
@@ -534,6 +642,26 @@ public class FitFlowFacade {
         usersByUsername.put("demo", demo);
         routinesByUserId.put("USER-DEMO", new ArrayList<String>());
         historyByUserId.put("USER-DEMO", new ArrayList<String>());
+    }
+
+    private void loadSavedUsers() {
+        // Loads saved CSV users so login still works after closing the app.
+        List<UserAccountRepository.AccountRecord> savedUsers =
+                userAccountRepository.loadUsers();
+
+        for (UserAccountRepository.AccountRecord savedUser : savedUsers) {
+            UserAccount account = new UserAccount(
+                    savedUser.userId,
+                    savedUser.username,
+                    savedUser.passwordHash,
+                    savedUser.email,
+                    savedUser.createdAt
+            );
+
+            usersByUsername.put(savedUser.username.toLowerCase(), account);
+            routinesByUserId.put(savedUser.userId, new ArrayList<String>());
+            historyByUserId.put(savedUser.userId, new ArrayList<String>());
+        }
     }
 
     /**

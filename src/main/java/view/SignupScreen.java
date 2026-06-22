@@ -33,6 +33,8 @@ public class SignupScreen extends BaseScreen {
 
     private TextField passwordVisibleField;
     private TextField confirmPasswordVisibleField;
+    private Label passwordValidationLabel;
+    private Label confirmPasswordValidationLabel;
 
     public SignupScreen(AppStateManager stateManager) {
 
@@ -124,6 +126,8 @@ public class SignupScreen extends BaseScreen {
         confirmPasswordVisibleField.textProperty().bindBidirectional(
                 confirmPasswordField.textProperty()
         );
+        passwordField.textProperty().addListener((obs, oldValue, newValue) -> validatePasswordLive());
+        confirmPasswordField.textProperty().addListener((obs, oldValue, newValue) -> validatePasswordLive());
 
         // Show Password Checkbox
 
@@ -150,31 +154,21 @@ public class SignupScreen extends BaseScreen {
 
         // Password Requirements
         
-        /*
-        Label passwordRequirements =
-                new Label(
-                        """
-                        Password Requirements:
-                        • At least 8 characters
-                        • One uppercase letter
-                        • One lowercase letter
-                        • One number
-                        """
-                );
-        */
-        
         // matching displayed password requirements to validation util
         // can change later if needed
         Label passwordRequirements =
                 new Label(
                         """
                         Password Requirements:
-                        • At least 6 characters
+                        • At least 12 characters
+                        • At least 1 number
                         """
                 );
 
         passwordRequirements.setWrapText(true);
         passwordRequirements.setMaxWidth(300);
+        passwordValidationLabel = new Label();
+        confirmPasswordValidationLabel = new Label();
 
         // Create Account Button
 
@@ -248,6 +242,8 @@ public class SignupScreen extends BaseScreen {
                 confirmPasswordVisibleField,
                 showPasswordCheckBox,
                 passwordRequirements,
+                passwordValidationLabel,
+                confirmPasswordValidationLabel,
                 createAccountButton,
                 messageLabel,
                 loginLink
@@ -259,14 +255,48 @@ public class SignupScreen extends BaseScreen {
 
         scene = new Scene(root, 900, 800);
     }
-    
+
+    private void validatePasswordLive() {
+        // Gives live feedback while the user types their password.
+        String password = passwordField.getText();
+        String confirmPassword = confirmPasswordField.getText();
+
+        boolean validPassword =
+                password.length() >= 12 && password.matches(".*\\d.*");
+
+        if (password.isEmpty()) {
+            passwordValidationLabel.setText("");
+        } else if (validPassword) {
+            passwordValidationLabel.setText("Password meets requirements.");
+            passwordValidationLabel.setTextFill(Color.GREEN);
+        } else {
+            passwordValidationLabel.setText("Password must be 12+ characters and include 1 number.");
+            passwordValidationLabel.setTextFill(Color.RED);
+        }
+
+        if (confirmPassword.isEmpty()) {
+            confirmPasswordValidationLabel.setText("");
+        } else if (confirmPassword.equals(password)) {
+            confirmPasswordValidationLabel.setText("Passwords match.");
+            confirmPasswordValidationLabel.setTextFill(Color.GREEN);
+        } else {
+            confirmPasswordValidationLabel.setText("Passwords do not match.");
+            confirmPasswordValidationLabel.setTextFill(Color.RED);
+        }
+    }
+
     public void clearUsername() {
     	usernameField.setText("");
     }
-    
+
     public void clearPasswords() {
-    	passwordField.setText("");
-    	confirmPasswordField.setText("");
+        // Clears signup form fields when leaving and returning to the page.
+        usernameField.setText("");
+        passwordField.setText("");
+        confirmPasswordField.setText("");
+        passwordValidationLabel.setText("");
+        confirmPasswordValidationLabel.setText("");
+        clearNotification();
     }
 
     public Scene getScene() {

@@ -19,6 +19,7 @@ import java.util.List;
 
 import javafx.stage.Stage;
 import model.UserProfile;
+import model.WorkoutSession;
 import service.*;
 
 public class AppStateManager {
@@ -227,5 +228,69 @@ public class AppStateManager {
     public ServiceResponse<Boolean> saveProfile(UserProfile profileData) {
         return facade.saveProfile(sessionToken, profileData);
     }
-    
+
+    // Start workout
+    public ServiceResponse<WorkoutSession> startGuidedWorkout(String routineName,
+                                                              List<String> exercises,
+                                                              int exerciseDuration,
+                                                              int restDuration) {
+
+        // Sends workout start request to the backend timer service.
+        return facade.startGuidedWorkout(
+                sessionToken,
+                routineName,
+                exercises,
+                exerciseDuration,
+                restDuration
+        );
+    }
+
+    // Pause Workout
+    public ServiceResponse<WorkoutSession> pauseGuidedWorkout() {
+
+        // Sends pause request to the backend timer service.
+        return facade.pauseGuidedWorkout(sessionToken);
+    }
+
+    // Resume Workout
+    public ServiceResponse<WorkoutSession> resumeGuidedWorkout() {
+
+        // Sends resume request to the backend timer service.
+        return facade.resumeGuidedWorkout(sessionToken);
+    }
+
+    // Reset Workout
+    public ServiceResponse<WorkoutSession> resetGuidedWorkout() {
+
+        // Sends reset request to the backend timer service.
+        return facade.resetGuidedWorkout(sessionToken);
+    }
+
+    // Skip Exercise
+    public ServiceResponse<WorkoutSession> skipGuidedWorkoutStep() {
+
+        // Sends skip request to move to next exercise.
+        return facade.skipGuidedWorkoutStep(sessionToken);
+    }
+
+    //Timer Tick
+    public ServiceResponse<WorkoutSession> tickGuidedWorkout() {
+
+        // Updates the timer by one second.
+        return facade.tickGuidedWorkout(sessionToken);
+    }
+
+    //Current Session
+    public ServiceResponse<WorkoutSession> getCurrentWorkoutSession() {
+
+        // Returns the current guided workout state.
+        return facade.getCurrentWorkoutSession(sessionToken);
+    }
+
+    //Save Completed Workout
+    public ServiceResponse<Boolean> saveCompletedWorkout() {
+
+        // Saves completed guided workout to workout history.
+        return facade.saveCompletedGuidedWorkout(sessionToken);
+    }
 }
