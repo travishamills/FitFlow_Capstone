@@ -1,40 +1,29 @@
 /*
  * File: WorkoutHistory.java
  * Author: Michael Lee
+ * Course: CMSC 495
  * Project: FitFlow
- * Date: June 8, 2026
+ * Date: June 2026
  * Version: 1.1
+ *
  * Description:
- * This file represents a completed workout in the FitFlow app.
- * I use this class to keep track of what routine was finished,
- * when it was completed, how long it took, and the estimated calories burned.
+ * This file stores one completed workout record for FitFlow.
  */
 
 package model;
 
 public class WorkoutHistory {
 
-    // Unique ID for this workout history record
+    // Basic workout history details
     private String historyId;
-
-    // ID of the user who completed the workout
     private String userId;
-
-    // Name of the workout routine that was completed
     private String routineName;
-
-    // Date when the workout was completed
     private String completedDate;
-
-    // Total workout duration in seconds
     private int duration;
-
-    // Estimated calories burned during the workout
     private double estimatedCalories;
 
     /*
-     * This constructor creates a new workout history record.
-     * It stores the completed workout information so it can be saved later.
+     * Creates a completed workout history record.
      */
     public WorkoutHistory(String historyId, String userId, String routineName,
                           String completedDate, int duration, double estimatedCalories) {
@@ -47,50 +36,49 @@ public class WorkoutHistory {
     }
 
     /*
-     * Returns the history ID.
+     * Gets the history ID.
      */
     public String getHistoryId() {
         return historyId;
     }
 
     /*
-     * Returns the user ID connected to this workout history.
+     * Gets the user ID.
      */
     public String getUserId() {
         return userId;
     }
 
     /*
-     * Returns the name of the routine that was completed.
+     * Gets the completed routine name.
      */
     public String getRoutineName() {
         return routineName;
     }
 
     /*
-     * Returns the date when the workout was completed.
+     * Gets the completed date.
      */
     public String getCompletedDate() {
         return completedDate;
     }
 
     /*
-     * Returns the total workout duration.
+     * Gets the workout duration.
      */
     public int getDuration() {
         return duration;
     }
 
     /*
-     * Returns the estimated calories burned.
+     * Gets the estimated calories burned.
      */
     public double getEstimatedCalories() {
         return estimatedCalories;
     }
 
     /*
-     * Converts the workout history data into CSV format.
-     * This makes it easier to save the record into workout_history.csv.
+     * Turns the workout history into one CSV row.
      */
     public String toCSV() {
         return historyId + "," + userId + "," + routineName + "," + completedDate + ","
@@ -98,8 +86,7 @@ public class WorkoutHistory {
     }
 
     /*
-     * Returns the workout history information in a readable format.
-     * This is mostly used for printing test results in the console.
+     * Shows the workout history in a simple readable way.
      */
     @Override
     public String toString() {
