@@ -1,13 +1,13 @@
 /*
  * File: WorkoutRoutineRepository.java
  * Author: Michael Lee
+ * Course: CMSC 495
  * Project: FitFlow
  * Date: June 2026
- * Version: 1.0
+ * Version: 1.1
+ *
  * Description:
- * This file saves and loads workout routines.
- * I made this so routine data has its own file instead of everything
- * staying inside CSVHelper.
+ * This file saves and loads workout routine data from workout_routines.csv.
  */
 
 package repository;
@@ -39,7 +39,7 @@ public class WorkoutRoutineRepository {
     }
 
     /*
-     * Makes sure the routine file exists before we use it.
+     * Makes sure the workout routine CSV file exists.
      */
     private void makeSureFileExists() {
         makeSureDataFolderExists();
@@ -102,7 +102,7 @@ public class WorkoutRoutineRepository {
     }
 
     /*
-     * Gets only the routines that belong to one user.
+     * Gets workout routines for one user.
      */
     public List<WorkoutRoutine> loadWorkoutRoutinesByUser(String userId) {
         List<WorkoutRoutine> allRoutines = loadAllWorkoutRoutines();
