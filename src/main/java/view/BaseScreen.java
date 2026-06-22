@@ -1,7 +1,7 @@
 /*
  * File: BaseScreen.java
- * Version: 0.5.2
- * Date last edited: 6/15/2026
+ * Version: 0.6.3
+ * Date last edited: 6/21/2026
  * Author: Alex Ronn
  * File Purpose: Abstract class that provides methods to set up the consistent interfaces.
  */
@@ -225,10 +225,8 @@ public abstract class BaseScreen {
         builderButton.setOnAction(event ->
                 stateManager.showRoutineBuilderScreen());
         
-        /*
         historyButton.setOnAction(event ->
                 stateManager.showWorkoutHistoryScreen());
-		*/
         
         /*
         timerButton.setOnAction(event ->

@@ -94,6 +94,14 @@ public class AppStateManager {
     }
     
     /**
+     * Shows the workout history screen.
+     */
+    public void showWorkoutHistoryScreen() {
+        WorkoutHistoryScreen historyScreen = new WorkoutHistoryScreen(this);
+        primaryStage.setScene(historyScreen.getScene());
+    }
+    
+    /**
      * Shows the profile screen for the signed-in user.
      *
      * The older Phase I version created a hardcoded John Smith profile just to
@@ -175,6 +183,21 @@ public class AppStateManager {
     		return attempt.getData();
     	}
     	return List.of();
+    }
+    
+    /*
+     * Gets the list of the names of workouts that have been completed.
+     *
+     * Requests the workout list from FitFlowFacade.
+     * Sends the current session token to the service layer and returns
+     * only the list data when the request succeeds.
+     */
+    public List<String> getWorkoutHistory() {
+        ServiceResponse<List<String>> attempt = facade.getWorkoutHistory(sessionToken);
+        if (attempt.isSuccess()) {
+            return attempt.getData();
+        }
+        return List.of();
     }
     
     /*
