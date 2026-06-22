@@ -1,46 +1,31 @@
 /*
  * File: WorkoutRoutine.java
  * Author: Michael Lee
- * Project: FitFow
- * Date: June 8, 2026
+ * Course: CMSC 495
+ * Project: FitFlow
+ * Date: June 2026
  * Version: 1.1
+ *
  * Description:
- * This file represents a workout routine in the FitFlow app.
- * I use this class to store the routine name, exercise, sets, reps,
- * duration, and rest time for a user's workout.
+ * This file stores workout routine information for FitFlow.
  */
 
 package model;
 
 public class WorkoutRoutine {
 
-    // Unique ID for the workout routine
+    // Basic workout routine details
     private String routineId;
-
-    // ID of the user who owns this routine
     private String userId;
-
-    // Name of the workout routine
     private String routineName;
-
-    // Name of the exercise included in the routine
     private String exerciseName;
-
-    // Number of sets for the exercise
     private int sets;
-
-    // Number of reps for the exercise
     private int reps;
-
-    // Duration of the exercise in seconds
     private int duration;
-
-    // Rest time between sets in seconds
     private int restTime;
 
     /*
-     * This constructor creates a new workout routine.
-     * It stores the routine details so the app can use them later.
+     * Creates a workout routine with the main routine details.
      */
     public WorkoutRoutine(String routineId, String userId, String routineName, String exerciseName,
                           int sets, int reps, int duration, int restTime) {
@@ -55,72 +40,70 @@ public class WorkoutRoutine {
     }
 
     /*
-     * Returns the routine ID.
+     * Gets the routine ID.
      */
     public String getRoutineId() {
         return routineId;
     }
 
     /*
-     * Returns the user ID connected to this routine.
+     * Gets the user ID.
      */
     public String getUserId() {
         return userId;
     }
 
     /*
-     * Returns the name of the workout routine.
+     * Gets the routine name.
      */
     public String getRoutineName() {
         return routineName;
     }
 
     /*
-     * Returns the exercise name used in this routine.
+     * Gets the exercise name.
      */
     public String getExerciseName() {
         return exerciseName;
     }
 
     /*
-     * Returns the number of sets.
+     * Gets the number of sets.
      */
     public int getSets() {
         return sets;
     }
 
     /*
-     * Returns the number of reps.
+     * Gets the number of reps.
      */
     public int getReps() {
         return reps;
     }
 
     /*
-     * Returns the exercise duration in seconds.
+     * Gets the exercise duration.
      */
     public int getDuration() {
         return duration;
     }
 
     /*
-     * Returns the rest time in seconds.
+     * Gets the rest time.
      */
     public int getRestTime() {
         return restTime;
     }
 
     /*
-     * Calculates the total time for this routine.
-     * It adds the exercise duration and rest time, then multiplies it by sets.
+     * Calculates the full routine time.
      */
     public int getTotalTime() {
         return (duration + restTime) * sets;
     }
 
     /*
-     * Checks if the routine has the basic information needed.
-     * This helps make sure an empty or invalid routine does not get saved.
+     * Checks that the routine has the basic needed information.
      */
     public boolean isValidRoutine() {
         return routineName != null && !routineName.isEmpty()
@@ -132,8 +115,7 @@ public class WorkoutRoutine {
     }
 
     /*
-     * Converts the workout routine data into CSV format.
-     * This makes it easier to save the routine into workout_routines.csv.
+     * Turns the routine into one CSV row.
      */
     public String toCSV() {
         return routineId + "," + userId + "," + routineName + "," + exerciseName + ","
@@ -141,8 +123,7 @@ public class WorkoutRoutine {
     }
 
     /*
-     * Returns the workout routine information in a readable format.
-     * This is mostly used for printing test results in the console.
+     * Shows the routine in a simple readable way.
      */
     @Override
     public String toString() {
