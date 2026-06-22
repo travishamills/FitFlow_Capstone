@@ -1,13 +1,13 @@
 /*
  * File: WorkoutHistoryRepository.java
  * Author: Michael Lee
+ * Course: CMSC 495
  * Project: FitFlow
  * Date: June 2026
- * Version: 1.0
+ * Version: 1.1
+ *
  * Description:
- * This file handles saving and loading workout history.
- * I made this so workout history has its own repository instead of keeping
- * everything inside one big CSVHelper file.
+ * This file saves and loads workout history data from workout_history.csv.
  */
 
 package repository;
@@ -28,7 +28,7 @@ public class WorkoutHistoryRepository {
     private static final String HEADER = "historyId,userId,routineName,completedDate,duration,estimatedCalories";
 
     /*
-     * Checks that the data folder is there before saving anything.
+     * Makes sure the data folder exists.
      */
     private void makeSureDataFolderExists() {
         try {
@@ -39,14 +39,13 @@ public class WorkoutHistoryRepository {
     }
 
     /*
-     * Checks that the workout history file exists.
-     * If it does not, this creates it with a header row.
+     * Makes sure the workout history CSV file exists.
      */
     private void makeSureFileExists() {
         makeSureDataFolderExists();
 
         try {
-            if (!Files.exists(Paths.get(FILE_PATH))) {
+            if (!Files.exists(Paths.get(FILE_PATH)) || Files.size(Paths.get(FILE_PATH)) == 0) {
                 FileWriter writer = new FileWriter(FILE_PATH);
                 writer.write(HEADER + "\n");
                 writer.close();
@@ -57,7 +56,7 @@ public class WorkoutHistoryRepository {
     }
 
     /*
-     * Saves one completed workout to the workout history CSV file.
+     * Saves one completed workout to the CSV file.
      */
     public void saveWorkoutHistory(WorkoutHistory history) {
         makeSureFileExists();
@@ -84,8 +83,12 @@ public class WorkoutHistoryRepository {
         try {
             List<String> lines = Files.readAllLines(Paths.get(FILE_PATH));
 
-            for (int i = 1; i < lines.size(); i++) {
-                WorkoutHistory history = parseWorkoutHistory(lines.get(i));
+            for (String line : lines) {
+                if (line.trim().isEmpty() || line.equals(HEADER)) {
+                    continue;
+                }
+
+                WorkoutHistory history = parseWorkoutHistory(line);
 
                 if (history != null) {
                     historyList.add(history);
@@ -99,7 +102,7 @@ public class WorkoutHistoryRepository {
     }
 
     /*
-     * Gets only the workout history for one user.
+     * Gets workout history for one user.
      */
     public List<WorkoutHistory> loadWorkoutHistoryByUser(String userId) {
         List<WorkoutHistory> allHistory = loadAllWorkoutHistory();
