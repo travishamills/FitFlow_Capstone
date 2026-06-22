@@ -1,19 +1,15 @@
 /*
  * File: ProfileRepository.java
  * Author: Michael Lee
- * Updated: David Lewis
+ * Contributors: David Lewis
+ * Course: CMSC 495
  * Project: FitFlow
- * Date: June 21 2026 
- * Version: 6.2
- * Description:
- * This file saves and loads user profiles.
- * I made this so profile data has its own repository instead of keeping
- * it inside CSVHelper.
+ * Date: June 2026
+ * Version: 1.2
  *
- * Update Notes:
- * Updated profile lookup so the newest saved profile is returned when a
- * user has more than one saved row in the CSV file. This lets the profile
- * screen load the latest saved values instead of an older duplicate row.
+ * Description:
+ * This file saves and loads user profile data from profiles.csv.
+ * It returns the newest saved profile if a user has more than one row.
  */
 
 package repository;
@@ -45,7 +41,7 @@ public class ProfileRepository {
     }
 
     /*
-     * Makes sure the profile file exists before we use it.
+     * Makes sure the profile CSV file exists.
      */
     private void makeSureFileExists() {
         makeSureDataFolderExists();
@@ -62,7 +58,7 @@ public class ProfileRepository {
     }
 
     /*
-     * Saves one user profile to the CSV file.
+     * Saves one profile to the CSV file.
      */
     public void saveProfile(UserProfile profile) {
         makeSureFileExists();
@@ -79,7 +75,7 @@ public class ProfileRepository {
     }
 
     /*
-     * Loads all saved user profiles.
+     * Loads all saved profiles.
      */
     public List<UserProfile> loadAllProfiles() {
         makeSureFileExists();
@@ -108,12 +104,7 @@ public class ProfileRepository {
     }
 
     /*
-     * Finds the latest saved profile for one user ID.
-     *
-     * The current CSV approach appends profile saves instead of rewriting the
-     * whole file. Because of that, a user may have more than one profile row.
-     * This method keeps scanning and returns the last matching row, which is
-     * the newest saved profile in the append-only CSV file.
+     * Finds the newest profile saved for one user ID.
      */
     public UserProfile findProfileByUserId(String userId) {
         List<UserProfile> profiles = loadAllProfiles();
@@ -129,10 +120,7 @@ public class ProfileRepository {
     }
 
     /*
-     * Finds the latest saved profile for one username.
-     *
-     * This follows the same append-only rule as findProfileByUserId so profile
-     * screens show the newest saved data instead of the first old row.
+     * Finds the newest profile saved for one username.
      */
     public UserProfile findProfileByUsername(String username) {
         List<UserProfile> profiles = loadAllProfiles();
