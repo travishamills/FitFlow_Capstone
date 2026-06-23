@@ -1,8 +1,9 @@
 /*
  * File: WorkoutTimer.java
  * Original Author: Orange Snaer
- * Version: 6.3
+ * Version: 6.4
  * Adapted by: Alex Ronn
+ * Updated by: David Lewis 
  * Date last edited: 6/22/2026
  * File Purpose: Sets up timers for the guided workout screen so the user
  *      knows when to work and when to rest. Handles set transitions, rest
@@ -203,6 +204,9 @@ public class WorkoutTimer {
         workout.restLabel.setPadding(new Insets(12, 25, 12, 25));
         workout.restLabel.setTextFill(Color.WHITE);
         workout.restLabel.setFont(Font.font("System", FontWeight.BOLD, 32));
+
+        // Persist the completed workout so WorkoutHistoryScreen can display it.
+        workout.saveCompletedWorkoutToHistory();
     }
 
     // Called when a rest period finishes. Increments the set and restarts.
