@@ -4,9 +4,9 @@
  * Course: UMGC CMSC 495
  * Phase: Phase II Source Code
  * Week: 6
- * Version: v0.6.2
+ * Version: v0.6.3
  * Author: David Lewis
- * Last Updated: 2026-06-21
+ * Last Updated: 2026-06-22
  *
  * Purpose:
  * Provides a central integration point between frontend controllers and
@@ -26,6 +26,7 @@
  */
 package service;
 
+import model.RoutineExerciseSelection;
 import model.UserProfile;
 import model.WorkoutHistory;
 import model.WorkoutRoutine;
@@ -241,6 +242,68 @@ public class FitFlowFacade {
         String routineRecord = routineName.trim() + " -> " + exerciseNames.toString();
         userRoutines.add(routineRecord);
 
+        return ServiceResponse.success(ErrorMessages.SUCCESS_ROUTINE_SAVED, Boolean.TRUE);
+    }
+
+
+    /*
+     * Saves a workout routine with the detailed settings selected in the
+     * Routine Builder UI.
+     *
+     * Saves each selected exercise with its own sets, reps, duration, and
+     * rest value.
+     * The older saveWorkout method only received exercise names and stored
+     * default values. This method preserves the user's changed builder values.
+     * RoutineBuilderScreen passes RoutineExerciseSelection objects through
+     * AppStateManager. The facade validates them, saves one WorkoutRoutine row
+     * per exercise, and still stores a readable in-memory display record.
+     */
+    public ServiceResponse<Boolean> saveWorkoutWithDetails(String sessionToken,
+                                                           String routineName,
+                                                           List<RoutineExerciseSelection> selectedExercises) {
+        if (!isValidSession(sessionToken)) {
+            return ServiceResponse.error(ErrorMessages.SESSION_EXPIRED, ErrorMessages.CODE_SESSION);
+        }
+
+        if (!ValidationUtil.isValidRoutineName(routineName)) {
+            return ServiceResponse.error(ErrorMessages.ROUTINE_NAME_REQUIRED, ErrorMessages.CODE_VALIDATION);
+        }
+
+        if (selectedExercises == null || selectedExercises.isEmpty()) {
+            return ServiceResponse.error(ErrorMessages.EXERCISE_LIST_REQUIRED, ErrorMessages.CODE_VALIDATION);
+        }
+
+        String userId = activeSessions.get(sessionToken);
+        String routineId = "ROUTINE-" + UUID.randomUUID().toString();
+        List<String> displayParts = new ArrayList<String>();
+
+        for (RoutineExerciseSelection selection : selectedExercises) {
+            if (selection == null || !selection.isValidSelection()) {
+                return ServiceResponse.error("Routine exercise settings are invalid.", ErrorMessages.CODE_VALIDATION);
+            }
+
+            WorkoutRoutine routine = new WorkoutRoutine(
+                    routineId,
+                    userId,
+                    routineName.trim(),
+                    selection.getExerciseName().trim(),
+                    selection.getSets(),
+                    selection.getReps(),
+                    selection.getWorkSeconds(),
+                    selection.getRestSeconds()
+            );
+
+            workoutRoutineRepository.saveWorkoutRoutine(routine);
+            displayParts.add(selection.toString());
+        }
+
+        List<String> userRoutines = routinesByUserId.get(userId);
+        if (userRoutines == null) {
+            userRoutines = new ArrayList<String>();
+            routinesByUserId.put(userId, userRoutines);
+        }
+
+        userRoutines.add(routineName.trim() + " -> " + displayParts.toString());
         return ServiceResponse.success(ErrorMessages.SUCCESS_ROUTINE_SAVED, Boolean.TRUE);
     }
 
@@ -530,6 +593,21 @@ public class FitFlowFacade {
         }
 
         return timerService.startWorkout(routineName, exercises, exerciseDurationSeconds, restDurationSeconds);
+    }
+
+    /*
+     * Starts a guided workout using the detailed Routine Builder settings.
+     * This preserves changed sets, reps, and rest values in the guided workout
+     * UI instead of falling back to default values.
+     */
+    public ServiceResponse<WorkoutSession> startGuidedWorkoutWithDetails(String sessionToken,
+                                                                         String routineName,
+                                                                         List<RoutineExerciseSelection> selectedExercises) {
+        if (!isValidSession(sessionToken)) {
+            return ServiceResponse.error(ErrorMessages.SESSION_EXPIRED, ErrorMessages.CODE_SESSION);
+        }
+
+        return timerService.startWorkoutWithSelections(routineName, selectedExercises);
     }
 
     public ServiceResponse<WorkoutSession> pauseGuidedWorkout(String sessionToken) {
