@@ -1,8 +1,9 @@
 /*
  * File: UserGuidedWorkout.java
  * Original Author: Orange Snaer
- * Version: 6.3
+ * Version: 6.4
  * Adapted by: Alex Ronn
+ * Updated by: David Lewis
  * Date last edited: 6/22/2026
  * File Purpose: Plays the workout exercises chosen by a user. The user can
  *      navigate through the workout using play, pause, previous, and next
@@ -94,6 +95,12 @@ public class UserGuidedWorkout extends BaseScreen {
     // Populated from the active WorkoutSession in show().
     public ExerciseData[] exercises;
 
+    // Stores the routine name from the current session for history records.
+    private String activeRoutineName = "Guided Workout";
+
+    // Prevents duplicate history rows if the completion UI is refreshed.
+    private boolean historySaved = false;
+
     // Constructor
 
     public UserGuidedWorkout(AppStateManager stateManager) {
@@ -105,6 +112,7 @@ public class UserGuidedWorkout extends BaseScreen {
     public void show(Stage stage) {
 
         exercises = loadExercisesFromSession();
+        historySaved = false;
 
         // If there are no exercises the session is invalid; fall back to
         // dashboard so the user sees a clear error rather than a broken screen.
@@ -164,6 +172,7 @@ public class UserGuidedWorkout extends BaseScreen {
             return new ExerciseData[0];
         }
 
+        activeRoutineName = response.getData().getRoutineName();
         List<String> names = response.getData().getExercises();
 
         if (names == null || names.isEmpty()) {
@@ -531,5 +540,69 @@ public class UserGuidedWorkout extends BaseScreen {
         updateQueue();
 
         playStopButton.setGraphic(IconImage("/Icons/play.png"));
+    }
+
+    /*
+     * Saves the workout after the visible guided workout timer completes.
+     *
+     * This is needed because the JavaFX timer controls the on-screen workout
+     * flow. Earlier versions did not call the service layer to create a 
+     * workout history row. The guard flag prevents repeated completion 
+     * events from adding duplicates.
+     */
+    public void saveCompletedWorkoutToHistory() {
+        if (historySaved) {
+            return;
+        }
+
+        historySaved = true;
+
+        int durationSeconds = calculatePlannedWorkoutDurationSeconds();
+        String summary = buildWorkoutHistorySummary();
+
+        ServiceResponse<Boolean> response =
+                stateManager.saveCompletedWorkout(summary, durationSeconds);
+
+        if (statusLabel != null) {
+            if (response.isSuccess()) {
+                statusLabel.setText("Workout saved to history.");
+            } else {
+                statusLabel.setText("Workout complete, but history was not saved: "
+                        + response.getMessage());
+            }
+        }
+    }
+
+    /*
+     * Calculates the planned workout time displayed by the guided workout UI.
+     * This includes each exercise set, short rests between sets, and long rests
+     * between different exercises.
+     */
+    private int calculatePlannedWorkoutDurationSeconds() {
+        int total = 0;
+
+        for (int i = 0; i < exercises.length; i++) {
+            ExerciseData exercise = exercises[i];
+
+            total += exercise.sets * exercise.workSeconds;
+
+            if (exercise.sets > 1) {
+                total += (exercise.sets - 1) * exercise.restSeconds;
+            }
+
+            if (i < exercises.length - 1) {
+                total += EXERCISE_REST;
+            }
+        }
+
+        return total;
+    }
+
+    /*
+     * Builds a short readable summary for the workout history CSV/UI row.
+     */
+    private String buildWorkoutHistorySummary() {
+        return activeRoutineName + " completed with "
+                + exercises.length + " exercise(s)";
     }
 }
