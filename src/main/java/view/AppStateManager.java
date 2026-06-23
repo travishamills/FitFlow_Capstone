@@ -306,4 +306,17 @@ public class AppStateManager {
         // Saves completed guided workout to workout history.
         return facade.saveCompletedGuidedWorkout(sessionToken);
     }
+
+    /*
+     * Saves a completed guided workout directly from the JavaFX timer screen.
+     *
+     * The guided workout UI uses its own visual countdown timer. Because that
+     * screen was not sending every UI tick back to TimerService, the backend
+     * WorkoutSession was not always marked complete. This bridge lets WorkoutTimer 
+     * save the completed workout summary through the normal 
+     * FitFlowFacade.saveWorkoutHistory path as soon as the user-facing workout finishes.
+     */
+    public ServiceResponse<Boolean> saveCompletedWorkout(String workoutSummary, int durationSeconds) {
+        return facade.saveWorkoutHistory(sessionToken, workoutSummary, durationSeconds);
+    }
 }
