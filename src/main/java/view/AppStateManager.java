@@ -1,7 +1,7 @@
 /*
  * File: AppStateManager.java
- * Version: 0.6.3
- * Date last edited: 6/21/2026
+ * Version: 0.6.4
+ * Date last edited: 6/22/2026
  * Author: Alex Ronn
  * Modified by: David Lewis
  * File Purpose: Manages swapping between different pages in the application.
@@ -18,6 +18,7 @@ package view;
 import java.util.List;
 
 import javafx.stage.Stage;
+import model.RoutineExerciseSelection;
 import model.UserProfile;
 import model.WorkoutSession;
 import service.*;
@@ -227,6 +228,17 @@ public class AppStateManager {
     public ServiceResponse<Boolean> saveRoutine(String routineName, List<String> exerciseNames) {
         return facade.saveWorkout(sessionToken, routineName, exerciseNames);
     }
+
+
+    /*
+     * Saves a routine with the user's selected sets, reps, duration, and rest.
+     * RoutineBuilderScreen calls this detailed path when the user changes the
+     * builder controls so those values are not lost before repository saving.
+     */
+    public ServiceResponse<Boolean> saveRoutineWithDetails(String routineName,
+                                                           List<RoutineExerciseSelection> selectedExercises) {
+        return facade.saveWorkoutWithDetails(sessionToken, routineName, selectedExercises);
+    }
     
     /*
      * Sends a profile save request from the UI to the service facade.
@@ -255,6 +267,21 @@ public class AppStateManager {
                 exercises,
                 exerciseDuration,
                 restDuration
+        );
+    }
+
+
+    /*
+     * Starts a guided workout with the detailed values from Routine Builder.
+     * This is the path used by the Start Exercise button after the user changes
+     * sets, reps, or rest values in the builder UI.
+     */
+    public ServiceResponse<WorkoutSession> startGuidedWorkoutWithDetails(String routineName,
+                                                                         List<RoutineExerciseSelection> selectedExercises) {
+        return facade.startGuidedWorkoutWithDetails(
+                sessionToken,
+                routineName,
+                selectedExercises
         );
     }
 
@@ -311,10 +338,10 @@ public class AppStateManager {
      * Saves a completed guided workout directly from the JavaFX timer screen.
      *
      * The guided workout UI uses its own visual countdown timer. Because that
-     * screen was not sending every UI tick back to TimerService, the backend
-     * WorkoutSession was not always marked complete. This bridge lets WorkoutTimer 
-     * save the completed workout summary through the normal 
-     * FitFlowFacade.saveWorkoutHistory path as soon as the user-facing workout finishes.
+     * screen was not sending UI tick back to TimerService, the backend
+     * WorkoutSession was not marked complete. This bridge lets WorkoutTimer save the completed
+     * workout summary through the normal FitFlowFacade.saveWorkoutHistory path
+     * as soon as the user-facing workout finishes.
      */
     public ServiceResponse<Boolean> saveCompletedWorkout(String workoutSummary, int durationSeconds) {
         return facade.saveWorkoutHistory(sessionToken, workoutSummary, durationSeconds);
