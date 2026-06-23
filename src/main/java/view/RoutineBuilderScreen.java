@@ -1,7 +1,7 @@
 /*
  * File: RoutineBuilderScreen.java
- * Version: 0.6.1
- * Date last edited: 6/20/2026
+ * Version: 0.6.2
+ * Date last edited: 6/22/2026
  * Original Author: Orange Snaer
  * Adapted by: Alex Ronn
  * Modified by: David Lewis
@@ -39,6 +39,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.scene.image.ImageView;
+import model.RoutineExerciseSelection;
 import service.ServiceResponse;
 
 public class RoutineBuilderScreen extends BaseScreen {
@@ -291,9 +292,15 @@ private ImageView ExerciseImage(String exerciseName) {
 private HBox RoutinePanel(String exerciseName) {
     HBox addedRoutnPanel = new HBox(20);
 
-    // Store the exercise name on the panel so the save logic can collect
-    // the selected routine without reading UI label text directly.
-    addedRoutnPanel.setUserData(exerciseName);
+    /*
+     * Store the full routine selection on the panel, not just the exercise
+     * name. The plus/minus buttons update this object as the user changes
+     * sets, reps, and rest. Later, Save and Start Exercise collect these
+     * objects so the guided workout does not fall back to default values.
+     */
+    RoutineExerciseSelection selection =
+            new RoutineExerciseSelection(exerciseName, 3, 10, 60, 30);
+    addedRoutnPanel.setUserData(selection);
     //Set position
     addedRoutnPanel.setAlignment(Pos.CENTER);
     //Set padding/margin
@@ -333,9 +340,9 @@ private HBox RoutinePanel(String exerciseName) {
     HBox controls = new HBox(30);
 
     //Add components to the panel
-    controls.getChildren().add(ComponentsControl("Sets", 3));
-    controls.getChildren().add(ComponentsControl("Reps", 10));
-    controls.getChildren().add(ComponentsControl("Rest", 30));
+    controls.getChildren().add(ComponentsControl("Sets", 3, selection));
+    controls.getChildren().add(ComponentsControl("Reps", 10, selection));
+    controls.getChildren().add(ComponentsControl("Rest", 30, selection));
 
     //Add to the panel
     content.getChildren().addAll(title, controls);
@@ -397,7 +404,7 @@ private HBox RoutinePanel(String exerciseName) {
         return addedRoutnPanel;
 }
 
-private VBox ComponentsControl(String labelText, int initialValue) {
+private VBox ComponentsControl(String labelText, int initialValue, RoutineExerciseSelection selection) {
     VBox box = new VBox(5);
     Label label = new Label(labelText);
 
@@ -412,22 +419,25 @@ private VBox ComponentsControl(String labelText, int initialValue) {
     //Create label to display the initial value for sets, reps, andrest
     Label labelValue = new Label(String.valueOf(initialValue));
 
-    //minus button actioon when clicked
+    // Minus button action: update both the visible label and the stored
+    // RoutineExerciseSelection object. This is the key fix that keeps user
+    // changes from being lost when the guided workout starts.
     minusButton.setOnAction(e -> {
-        //Get current value from the label
         int value = Integer.parseInt(labelValue.getText());
 
         if (value > 0) {
-            //decrease value by 1
-            labelValue.setText(String.valueOf(value - 1));
+            int newValue = value - 1;
+            labelValue.setText(String.valueOf(newValue));
+            updateSelectionValue(selection, labelText, newValue);
         }});
 
         addButton.setOnAction(e -> {
 
         int value = Integer.parseInt(labelValue.getText());
 
-        //increase value by 1
-        labelValue.setText(String.valueOf(value + 1));
+        int newValue = value + 1;
+        labelValue.setText(String.valueOf(newValue));
+        updateSelectionValue(selection, labelText, newValue);
         });
 
         HBox button = new HBox(10, minusButton, labelValue, addButton);
@@ -444,6 +454,31 @@ private VBox ComponentsControl(String labelText, int initialValue) {
         box.getChildren().addAll(label, button);
 
         return box;
+}
+
+/*
+ * Keeps the stored routine selection synchronized with the visible plus/minus
+ * controls. The labels alone are not reliable data storage because the Start
+ * Exercise button later needs a clean object to pass to the service layer.
+ */
+private void updateSelectionValue(RoutineExerciseSelection selection, String labelText, int value) {
+    if (selection == null || labelText == null) {
+        return;
+    }
+
+    switch (labelText) {
+        case "Sets":
+            selection.setSets(value);
+            break;
+        case "Reps":
+            selection.setReps(value);
+            break;
+        case "Rest":
+            selection.setRestSeconds(value);
+            break;
+        default:
+            break;
+    }
 }
 
 
@@ -491,13 +526,11 @@ private HBox BottomButtons(Stage stage) {
 
 // Connects start exercise button to backend
 private void startWorkout(Stage stage) {
-    List<String> selectedExercises = getSelectedExerciseNames();
+    List<RoutineExerciseSelection> selectedExercises = getSelectedRoutineSelections();
 
-    ServiceResponse<?> response = stateManager.startGuidedWorkout(
+    ServiceResponse<?> response = stateManager.startGuidedWorkoutWithDetails(
             "Guided Workout",
-            selectedExercises,
-            60,
-            30
+            selectedExercises
     );
 
     if (!response.isSuccess()) {
@@ -514,19 +547,39 @@ private void startWorkout(Stage stage) {
 /*
  * Collects the exercises currently shown in the selected routine panel.
  *
- * What: Builds a list of exercise names from the routine items the user added.
- * Why: The service layer needs clean routine data, not JavaFX controls.
- * How: Each routine panel stores its exercise name in userData when created.
+ * Builds a list of exercise names from the routine items the user added.
+ * The service layer needs clean routine data, not JavaFX controls.
+ * Each routine panel stores its exercise name in userData when created.
  */
 private List<String> getSelectedExerciseNames() {
 
     List<String> selectedExercises = new ArrayList<>();
 
-    for (Node node : addedRoutineListPanel.getChildren()) {
-        Object exerciseName = node.getUserData();
+    for (RoutineExerciseSelection selection : getSelectedRoutineSelections()) {
+        selectedExercises.add(selection.getExerciseName());
+    }
 
-        if (exerciseName instanceof String) {
-            selectedExercises.add((String) exerciseName);
+    return selectedExercises;
+}
+
+/*
+ * Collects the full exercise settings currently shown in the routine panel.
+ *
+ * Returns exercise name, sets, reps, duration, and rest for each row.
+ * Save and Start Exercise need the user's edited builder values, not
+ *      hardcoded defaults.
+ * RoutinePanel stores one RoutineExerciseSelection in each panel's
+ *      userData, and the plus/minus controls keep that object updated.
+ */
+private List<RoutineExerciseSelection> getSelectedRoutineSelections() {
+
+    List<RoutineExerciseSelection> selectedExercises = new ArrayList<>();
+
+    for (Node node : addedRoutineListPanel.getChildren()) {
+        Object userData = node.getUserData();
+
+        if (userData instanceof RoutineExerciseSelection) {
+            selectedExercises.add((RoutineExerciseSelection) userData);
         }
     }
 
@@ -536,10 +589,10 @@ private List<String> getSelectedExerciseNames() {
 /*
  * Creates the save-routine overlay used by the Save button.
  *
- * What: Prompts the user for a routine name and submits selected exercises.
- * Why: Routine saving needs validation and service feedback before the user
+ * Prompts the user for a routine name and submits selected exercises.
+ * Routine saving needs validation and service feedback before the user
  * sees a success message.
- * How: The popup validates the routine name, gets selected exercises, calls
+ * The popup validates the routine name, gets selected exercises, calls
  * AppStateManager.saveRoutine, and displays the ServiceResponse message.
  */
 private StackPane createSaveRoutineOverlay() {
@@ -621,12 +674,13 @@ private StackPane createSaveRoutineOverlay() {
             return;
         }
 
-        List<String> selectedExercises = getSelectedExerciseNames();
+        List<RoutineExerciseSelection> selectedExercises = getSelectedRoutineSelections();
 
-        // Send the routine through AppStateManager so the UI stays separated
-        // from FitFlowFacade and follows the project architecture.
+        // Send the full routine settings through AppStateManager so the UI stays
+        // separated from FitFlowFacade and the user's changed sets/reps/rest
+        // values are persisted instead of default values.
         ServiceResponse<Boolean> response =
-                stateManager.saveRoutine(routineName, selectedExercises);
+                stateManager.saveRoutineWithDetails(routineName, selectedExercises);
 
         routineNameMessageLabel.setText(response.getMessage());
 
