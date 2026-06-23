@@ -1,0 +1,7 @@
+# Defect Log Update - 2026-06-22
+
+| Bug ID | Test ID | Description | Severity | Assigned To | Status | Retest / Resolution Notes |
+| BUG-04 | TC-AUTH-07 / TC-AUTH-08 | Valid signup regression failed because the test used `password`, but the current validation rule requires 12+ characters and at least one number. Duplicate username error code also failed because the first signup never created the account. | Medium | David Lewis | Closed | Updated `IntegrationRegressionTest.java` to use a valid password (`Password12345`) and a unique username for repeated test runs. Reran the test: 68 passed, 0 failed. |
+
+## Notes
+This was a test-data issue, not a failure of the signup service. The service was correctly rejecting the weak password. The regression test now matches the current password rule and still verifies duplicate-account protection.
