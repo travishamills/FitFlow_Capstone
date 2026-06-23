@@ -1,7 +1,7 @@
 /*
  * File: UserGuidedWorkout.java
  * Original Author: Orange Snaer
- * Version: 6.4
+ * Version: 6.5
  * Adapted by: Alex Ronn
  * Updated by: David Lewis
  * Date last edited: 6/22/2026
@@ -41,6 +41,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import model.RoutineExerciseSelection;
 import model.WorkoutSession;
 import service.ServiceResponse;
 
@@ -49,11 +50,9 @@ public class UserGuidedWorkout extends BaseScreen {
     /*
      * Lightweight exercise data holder used by this screen.
      *
-     * WorkoutSession stores exercise names as plain strings. This inner class
-     * attaches the UI-only fields (image path, sets, reps, work seconds, rest
-     * seconds) that the guided workout screen needs without touching the model
-     * layer. Default values are used until per-exercise configuration is added
-     * to the routine builder and passed through the session.
+     * WorkoutSession now stores the detailed Routine Builder selections. This
+     * inner class adds image paths for the UI while preserving the selected
+     * sets, reps, work seconds, and rest seconds from the builder screen.
      */
     public static class ExerciseData {
         public final String name;
@@ -157,11 +156,10 @@ public class UserGuidedWorkout extends BaseScreen {
     /*
      * Builds the ExerciseData array from the active WorkoutSession.
      *
-     * The session holds exercise names as plain strings. Default values for
-     * sets, reps, work seconds, and rest seconds are applied here until the
-     * routine builder passes those values through to the session. Image paths
-     * are resolved with the same switch used in RoutineBuilderScreen so both
-     * screens show consistent visuals.
+     * The session holds the detailed exercise settings passed from
+     * RoutineBuilderScreen. This method converts those model objects into
+     * ExerciseData objects and adds the correct image paths for the UI. This is
+     * what keeps changed sets, reps, and rest values from resetting to defaults.
      */
     private ExerciseData[] loadExercisesFromSession() {
 
@@ -172,23 +170,25 @@ public class UserGuidedWorkout extends BaseScreen {
             return new ExerciseData[0];
         }
 
-        activeRoutineName = response.getData().getRoutineName();
-        List<String> names = response.getData().getExercises();
+        WorkoutSession session = response.getData();
+        activeRoutineName = session.getRoutineName();
+        List<RoutineExerciseSelection> selections = session.getRoutineExercises();
 
-        if (names == null || names.isEmpty()) {
+        if (selections == null || selections.isEmpty()) {
             return new ExerciseData[0];
         }
 
         List<ExerciseData> list = new ArrayList<>();
 
-        for (String name : names) {
+        for (RoutineExerciseSelection selection : selections) {
+            String name = selection.getExerciseName();
             list.add(new ExerciseData(
                     name,
                     resolveImagePath(name),
-                    3,   // default sets
-                    15,  // default reps
-                    response.getData().getExerciseDurationSeconds(),
-                    response.getData().getRestDurationSeconds()
+                    selection.getSets(),
+                    selection.getReps(),
+                    selection.getWorkSeconds(),
+                    selection.getRestSeconds()
             ));
         }
 
@@ -546,9 +546,9 @@ public class UserGuidedWorkout extends BaseScreen {
      * Saves the workout after the visible guided workout timer completes.
      *
      * This is needed because the JavaFX timer controls the on-screen workout
-     * flow. Earlier versions did not call the service layer to create a 
-     * workout history row. The guard flag prevents repeated completion 
-     * events from adding duplicates.
+     * flow. Earlier versions the UI did not acall the service layer to 
+     * create a workout history row. The guard flag prevents repeated 
+     * completion events from adding duplicates.
      */
     public void saveCompletedWorkoutToHistory() {
         if (historySaved) {
