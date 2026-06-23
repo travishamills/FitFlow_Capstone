@@ -42,7 +42,7 @@ java -cp out IntegrationRegressionTest
 Expected result:
 
 
-Passed checks: 68
+Passed checks: 78
 Failed checks: 0
 
 
