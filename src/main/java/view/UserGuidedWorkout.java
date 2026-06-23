@@ -4,7 +4,7 @@
  * Version: 6.5
  * Adapted by: Alex Ronn
  * Updated by: David Lewis
- * Date last edited: 6/22/2026
+ * Date last edited: 6/23/2026
  * File Purpose: Plays the workout exercises chosen by a user. The user can
  *      navigate through the workout using play, pause, previous, and next
  *      buttons. Exercise data is pulled from AppStateManager via the active
@@ -12,11 +12,7 @@
  */
 
 package view;
-
-import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
-
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -219,6 +215,25 @@ public class UserGuidedWorkout extends BaseScreen {
         }
     }
 
+    //Returns the resource workout category for a given exercise name.
+    //added
+    private String workoutCategory(String exerciseName) {
+    switch (exerciseName) {
+        case "Push-ups":
+            return "Strength";
+        case "Plank":
+            return "Core";
+        case "Sit-ups":
+            return "Core";
+        case "Squats":
+            return "Legs";
+        case "Dumbbell Curls":
+            return "Arms";
+        default:
+            return "Unknown";
+    }
+}
+
     // Image loading
 
     // Loads the image for the current exercise into the main display area.
@@ -413,7 +428,8 @@ public class UserGuidedWorkout extends BaseScreen {
         nameLabel.setTextFill(Color.WHITE);
         nameLabel.setFont(Font.font("System", FontWeight.BOLD, 16));
 
-        Label categoryLabel = new Label("Set: " + category);
+        Label categoryLabel = new Label("Category: " + workoutCategory(exercise.name));     //added
+        Label setsLabel = new Label("Sets: " + currentSet + " of " + exercise.sets);               //added
         Label repsLabel     = new Label("Reps: " + reps);
         Label durationLabel = new Label("Time: " + duration);
         Label restInfo      = new Label("Rest: " + exercise.restSeconds + " sec");
@@ -424,7 +440,7 @@ public class UserGuidedWorkout extends BaseScreen {
         restInfo.setTextFill(Color.WHITE);
 
         infoLabels.getChildren().addAll(
-                nameLabel, categoryLabel, repsLabel, durationLabel, restInfo);
+        nameLabel, categoryLabel, setsLabel, repsLabel, durationLabel, restInfo);  //added setsLabel
         content.getChildren().addAll(imageQueue, infoLabels);
         imageCard.getChildren().add(content);
 
@@ -498,8 +514,10 @@ public class UserGuidedWorkout extends BaseScreen {
             ExerciseData next = exercises[i];
             upcomingContainer.getChildren().add(WorkoutImageCard(
                     next,
-                    "Category",
-                    next.sets + " x " + next.reps,
+                    //"Category",
+                    ///next.sets + " x " + next.reps,
+                    workoutCategory(next.name),                    //added
+                    String.valueOf(next.reps),                   //added
                     next.workSeconds + " sec"));
         }
     }
@@ -605,4 +623,12 @@ public class UserGuidedWorkout extends BaseScreen {
         return activeRoutineName + " completed with "
                 + exercises.length + " exercise(s)";
     }
+
+    /*
+     *refreshes the workout queue
+     */
+    //added
+    public void updateSetProgress() {
+    updateQueue();
+}
 }
