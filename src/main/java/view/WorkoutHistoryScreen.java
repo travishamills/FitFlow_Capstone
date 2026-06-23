@@ -38,7 +38,7 @@ public class WorkoutHistoryScreen extends BaseScreen {
 
         StackPane root = createRootLayout();
 
-        StackPane card = createCard(900, 650);
+        StackPane card = createCard(920, 650);
 
         VBox content = createCardContent();
 
@@ -98,7 +98,7 @@ public class WorkoutHistoryScreen extends BaseScreen {
         root.getChildren().add(card);
         addNavigationMenu(root);
 
-        scene = new Scene(root, 1200, 800);
+        scene = new Scene(root, 1250, 800);
     }
 
     /*
@@ -116,7 +116,7 @@ public class WorkoutHistoryScreen extends BaseScreen {
         row.setPadding(new Insets(14, 20, 14, 20));
 
         row.setBackground(new Background(new BackgroundFill(
-                Color.web("#F4F7FC"),
+                Color.web("#1E5AA8"),
                 new CornerRadii(10),
                 Insets.EMPTY
         )));
@@ -140,7 +140,7 @@ public class WorkoutHistoryScreen extends BaseScreen {
                 buildField("Date",     date,     220),
                 buildField("Routine",  routine,  220),
                 buildField("Duration", duration, 160),
-                buildField("Calories", calories, 160)
+                buildField("Calories", calories, 100)
         );
 
         return row;
@@ -153,11 +153,11 @@ public class WorkoutHistoryScreen extends BaseScreen {
 
         Label label = new Label(labelText);
         label.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
-        label.setTextFill(Color.web("#888888"));
+        label.setTextFill(Color.web("#BBBBBB"));
 
         Label value = new Label(valueText);
         value.setFont(Font.font("Segoe UI", 13));
-        value.setTextFill(Color.web("#222222"));
+        value.setTextFill(Color.web("#FFFFFF"));
         value.setWrapText(true);
         value.setMaxWidth(width);
 
