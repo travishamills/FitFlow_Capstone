@@ -3,7 +3,7 @@
  * Project: FitFlow - Interactive Workout Assistant
  * Course: UMGC CMSC 495 Computer Science Capstone
  * Phase: Phase II Source Code
- * Version: v0.6.3
+ * Version: v0.6.4
  * Author: David Lewis
  * Created: 2026-06-20
  * Last Updated: 2026-06-22
@@ -43,7 +43,9 @@
  *   result unless the team intentionally changed the requirement.
  */
 
+import model.RoutineExerciseSelection;
 import model.UserProfile;
+import model.WorkoutSession;
 import service.ErrorMessages;
 import service.FitFlowFacade;
 import service.ServiceResponse;
@@ -102,6 +104,7 @@ public class IntegrationRegressionTest {
         testSignupValidationAndDuplicateProtection();
         testSigninLogoutAndInvalidSessionBehavior();
         testRoutineSaveAndReloadForBug03();
+        testDetailedRoutineBuilderSettingsArePreserved();
         testProfileSaveValidationAndSuccess();
         testCaloriesHistoryRecommendationsAndSecurityRegression();
 
@@ -273,6 +276,48 @@ public class IntegrationRegressionTest {
         checkTrue("Repository-backed routine reload succeeds after facade restart", persistedRoutines.isSuccess());
         checkTrue("CSV routine reload still includes Morning Starter", persistedRoutines.getData().toString().contains("Morning Starter"));
         checkTrue("CSV routine reload still includes selected exercise", persistedRoutines.getData().toString().contains("Squats"));
+        System.out.println();
+    }
+
+    /**
+     * Tests the detailed Routine Builder path for sets, reps, and rest values.
+     *
+     * This protects the UI fix where RoutineBuilderScreen now stores a
+     * RoutineExerciseSelection object for each added exercise. The service path
+     * must preserve those values inside WorkoutSession so UserGuidedWorkout can
+     * display them instead of rebuilding defaults.
+     */
+    private void testDetailedRoutineBuilderSettingsArePreserved() {
+        System.out.println("TC-RB-09 and guided workout regression: builder values are preserved");
+        FitFlowFacade facade = new FitFlowFacade();
+        String sessionToken = signInAndReturnToken(facade);
+
+        List<RoutineExerciseSelection> selections = Arrays.asList(
+                new RoutineExerciseSelection("Push-ups", 5, 12, 60, 45),
+                new RoutineExerciseSelection("Sit-ups", 4, 20, 60, 15)
+        );
+
+        ServiceResponse<Boolean> saveDetailedRoutine = facade.saveWorkoutWithDetails(
+                sessionToken,
+                "Custom Builder Routine",
+                selections
+        );
+        checkTrue("Detailed routine save succeeds", saveDetailedRoutine.isSuccess());
+
+        ServiceResponse<WorkoutSession> startDetailedWorkout = facade.startGuidedWorkoutWithDetails(
+                sessionToken,
+                "Custom Builder Routine",
+                selections
+        );
+        checkTrue("Detailed guided workout starts", startDetailedWorkout.isSuccess());
+
+        WorkoutSession session = startDetailedWorkout.getData();
+        checkEquals("First exercise keeps edited sets", 5, session.getRoutineExercises().get(0).getSets());
+        checkEquals("First exercise keeps edited reps", 12, session.getRoutineExercises().get(0).getReps());
+        checkEquals("First exercise keeps edited rest", 45, session.getRoutineExercises().get(0).getRestSeconds());
+        checkEquals("Second exercise keeps edited sets", 4, session.getRoutineExercises().get(1).getSets());
+        checkEquals("Second exercise keeps edited reps", 20, session.getRoutineExercises().get(1).getReps());
+        checkEquals("Second exercise keeps edited rest", 15, session.getRoutineExercises().get(1).getRestSeconds());
         System.out.println();
     }
 
