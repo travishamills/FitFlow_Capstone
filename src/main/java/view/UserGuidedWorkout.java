@@ -12,6 +12,8 @@
  */
 
 package view;
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
