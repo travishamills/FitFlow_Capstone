@@ -3,10 +3,10 @@
  * Project: FitFlow - Interactive Workout Assistant
  * Course: UMGC CMSC 495 Computer Science Capstone
  * Phase: Phase II Source Code
- * Version: v0.6.2
+ * Version: v0.6.3
  * Author: David Lewis
  * Created: 2026-06-20
- * Last Updated: 2026-06-21
+ * Last Updated: 2026-06-22
  *
  * Purpose:
  * Runs the integration and regression checks assigned to the team-lead/service
@@ -126,16 +126,22 @@ public class IntegrationRegressionTest {
      * checks the ServiceResponse success flag, error code, and returned user ID.
      * Invalid input should return validation errors, valid input should
      * return a user ID, and duplicate usernames should return an auth error.
+     * This test uses a unique username for the valid signup path so rerunning
+     * the regression test does not fail because an older users.csv file already
+     * contains the same test account.
      * Edge cases tested are too-short username, too-short password, invalid email
-     * format, and duplicate normalized username.
+     * format, duplicate normalized username, and valid password rules.
      */
     private void testSignupValidationAndDuplicateProtection() {
         System.out.println("TC-AUTH-03 to TC-AUTH-08: Signup validation and duplicate protection");
         FitFlowFacade facade = new FitFlowFacade();
 
         // Username must be at least the required length.
+        // Use a valid password here so this check isolates username validation.
         // The facade rejects the request before account creation.
-        ServiceResponse<String> shortUsername = facade.signUp("ab", "password", "ab@example.com");
+        String validTestPassword = "Password12345";
+        String uniqueUsername = "newuser" + System.currentTimeMillis();
+        ServiceResponse<String> shortUsername = facade.signUp("ab", validTestPassword, "ab@example.com");
         checkFalse("Short username is rejected", shortUsername.isSuccess());
         checkEquals("Short username returns validation code", ErrorMessages.CODE_VALIDATION, shortUsername.getErrorCode());
 
@@ -147,19 +153,19 @@ public class IntegrationRegressionTest {
 
         // Email is missing the required email format.
         // The service returns a validation error instead of accepting bad contact data.
-        ServiceResponse<String> invalidEmail = facade.signUp("validuser", "password", "userexample.com");
+        ServiceResponse<String> invalidEmail = facade.signUp("validuser", validTestPassword, "userexample.com");
         checkFalse("Invalid email is rejected", invalidEmail.isSuccess());
         checkEquals("Invalid email returns validation code", ErrorMessages.CODE_VALIDATION, invalidEmail.getErrorCode());
 
         // All fields are valid.
         // The account is created and the facade returns a non-blank user ID.
-        ServiceResponse<String> validSignup = facade.signUp("newuser", "password", "newuser@example.com");
+        ServiceResponse<String> validSignup = facade.signUp(uniqueUsername, validTestPassword, uniqueUsername + "@example.com");
         checkTrue("Valid signup creates an account", validSignup.isSuccess());
         checkNotBlank("Valid signup returns a user ID", validSignup.getData());
 
         // The same username is submitted again after account creation.
         // Duplicate signup fails so users cannot overwrite each other.
-        ServiceResponse<String> duplicateSignup = facade.signUp("newuser", "password", "newuser@example.com");
+        ServiceResponse<String> duplicateSignup = facade.signUp(uniqueUsername, validTestPassword, uniqueUsername + "@example.com");
         checkFalse("Duplicate username is rejected", duplicateSignup.isSuccess());
         checkEquals("Duplicate username returns auth code", ErrorMessages.CODE_AUTH, duplicateSignup.getErrorCode());
         System.out.println();
