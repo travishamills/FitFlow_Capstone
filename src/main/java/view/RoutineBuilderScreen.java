@@ -1,7 +1,7 @@
 /*
  * File: RoutineBuilderScreen.java
  * Version: 0.6.2
- * Date last edited: 6/22/2026
+ * Date last edited: 6/23/2026
  * Original Author: Orange Snaer
  * Adapted by: Alex Ronn
  * Modified by: David Lewis
@@ -43,7 +43,7 @@ import model.RoutineExerciseSelection;
 import service.ServiceResponse;
 
 public class RoutineBuilderScreen extends BaseScreen {
-	
+
 	private final String IMAGES = "/Images";
 	private final String ICONS = "/Icons";
 
@@ -55,14 +55,14 @@ public class RoutineBuilderScreen extends BaseScreen {
     private ScrollPane routinePanel;
     private  HBox centerExerciseList;
     private HBox bottomButtons;
-    
+
     // Save-routine overlay fields used to name and submit a selected routine.
     private StackPane saveRoutineOverlay;
     private TextField routineNameField;
     private Label routineNameMessageLabel;
-    
+
     private Button saveRoutineButton;
-    
+
     public RoutineBuilderScreen(AppStateManager stateManager) {
         super(stateManager);
     }
@@ -80,6 +80,7 @@ public class RoutineBuilderScreen extends BaseScreen {
         //Create panels for exercise list and added exercise
         exercisePanel = ExerciseList();
         routinePanel = AddedRoutinePanel();
+        routinePanel.setFitToHeight(true);  //modify: added
 
         //Create horizontal panel and store exercise list
         centerExerciseList = new HBox(exercisePanel);
@@ -90,15 +91,22 @@ public class RoutineBuilderScreen extends BaseScreen {
         primaryPane.setTop(Header());
 
         //Set the exercise list to the center of the screen
-        primaryPane.setCenter(centerExerciseList);
+       // primaryPane.setCenter(centerExerciseList);
+
+       //modify: added
+       //Set up the main screen layout
+       VBox centerContainer = new VBox(centerExerciseList);
+       VBox.setVgrow(centerExerciseList, Priority.ALWAYS);
+
+        primaryPane.setCenter(centerContainer);
 
         bottomButtons = BottomButtons(stage);
         primaryPane.setBottom(bottomButtons);
-        
+
         //Add navigation menu
         root.getChildren().add(primaryPane);
         addNavigationMenu(root);
-        
+
         // Add hidden overlay for routine naming and service-layer saving.
         saveRoutineOverlay = createSaveRoutineOverlay();
 
@@ -107,10 +115,12 @@ public class RoutineBuilderScreen extends BaseScreen {
         );
 
         //Create window size
-        Scene scene = new Scene(root, 1600, 1000);
+        //Scene scene = new Scene(root, 1200, 800);
+        Scene scene = new Scene(root);   //modify:
 
         //Window title
         stage.setScene(scene);
+        stage.setMaximized(true);
         stage.show();
 }
 
@@ -127,8 +137,8 @@ private VBox Header() {
     VBox header = new VBox(title);
     //Set position to center
     header.setAlignment(Pos.CENTER);
-    //Set spacing to 45 to not touch edge
-    header.setPadding(new Insets(40));
+    //Set spacing to 15 to not touch edge
+    header.setPadding(new Insets(15));
 
     return header;
 }
@@ -140,7 +150,7 @@ private VBox ExerciseList() {
     box.setPadding(new Insets(20));
     //Exercise panel size
     //set size
-    box.setPrefWidth(725);
+    box.setPrefWidth(700);
 
     //Title set for exercise list
     Label title = new Label("Exercise Lists");
@@ -155,10 +165,10 @@ private VBox ExerciseList() {
 
     //Add title to the screen
     box.getChildren().add(title);
-    
+
     //Add exercise lists such as planks, push ups on the screen
     List<String> exercises = stateManager.getExercises();
-    
+
     for (int i = 0; i < exercises.size(); i++) {
     	String exercise = exercises.get(i);
     	box.getChildren().add(ExercisePanelList(exercise));
@@ -173,7 +183,7 @@ private ScrollPane AddedRoutinePanel() {
     addedRoutineListPanel = new VBox(20);
 
     //Set spacing to not touch edge
-    addedRoutineListPanel.setPadding(new Insets(20));
+    addedRoutineListPanel.setPadding(new Insets(40));
 
     //Create scrollpane for the added exerice list to be scrolled when it gets long
     ScrollPane scrollPane = new ScrollPane(addedRoutineListPanel);
@@ -181,9 +191,10 @@ private ScrollPane AddedRoutinePanel() {
     //Set size of the added exercise panel to fit the screen
     scrollPane.setFitToWidth(true);
 
-    //set prefered size off the main screen on the added routine
+    //set prefered size off the main screen on the added routine        //modify: remove
     // ADD THESE
-    scrollPane.setPrefSize(700, 700);
+    //scrollPane.setPrefSize(700, 700);
+
 
     return scrollPane;
 }
@@ -496,8 +507,15 @@ private HBox BottomButtons(Stage stage) {
     saveRoutineButton.setFont(Font.font("Arial", 14));
     startButton.setFont(Font.font("Arial", 14));
 
-    saveRoutineButton.setPrefSize(120, 40);
-    startButton.setPrefSize(160, 40);
+    //saveRoutineButton.setPrefSize(120, 40);
+    //startButton.setPrefSize(160, 40);
+
+    //modify: added
+    saveRoutineButton.setPrefHeight(40);
+    startButton.setPrefHeight(40);
+
+    saveRoutineButton.setMinWidth(Region.USE_PREF_SIZE);
+    startButton.setMinWidth(Region.USE_PREF_SIZE);
 
     saveRoutineButton.setOnAction(event -> {
 
@@ -511,8 +529,9 @@ private HBox BottomButtons(Stage stage) {
     startButton.setOnAction(e -> startWorkout(stage));
 
     HBox buttons = new HBox(20);
+    buttons.setMinHeight(80);  //added
     buttons.setAlignment(Pos.CENTER_RIGHT);
-    buttons.setPadding(new Insets(20));
+    buttons.setPadding(new Insets(-50, 20, 5, -20));  //modified: added
 
     //Add to screen
     buttons.getChildren().addAll(saveRoutineButton, startButton);
@@ -520,6 +539,9 @@ private HBox BottomButtons(Stage stage) {
     //Hide buttons
     buttons.setVisible(false);
     buttons.setManaged(false);
+
+    //keep buttons from touching edge
+    BorderPane.setMargin(buttons, new Insets(10));  //added
 
     return buttons;
 }
