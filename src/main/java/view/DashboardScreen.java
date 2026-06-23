@@ -80,7 +80,6 @@ public class DashboardScreen extends BaseScreen {
         Button profileButton      = createNavButton("Profile");
         Button builderButton      = createNavButton("Workout Builder");
         Button historyButton      = createNavButton("Workout History");
-        Button timerButton        = createNavButton("Interval Timer");
 
         profileButton.setOnAction(event ->
                 stateManager.showProfileScreen());
@@ -91,16 +90,11 @@ public class DashboardScreen extends BaseScreen {
         historyButton.setOnAction(event ->
                 stateManager.showWorkoutHistoryScreen());
 
-        /*
-        timerButton.setOnAction(event ->
-                stateManager.showIntervalTimerScreen());
-        */
 
         VBox navButtons = new VBox(10,
                 profileButton,
                 builderButton,
-                historyButton,
-                timerButton
+                historyButton
         );
         navButtons.setPadding(new Insets(0, 0, 20, 0));
 

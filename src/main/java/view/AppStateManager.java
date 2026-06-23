@@ -127,6 +127,19 @@ public class AppStateManager {
         );
     }
     
+    /**
+     * Shows the guided workout screen for the active session.
+     *
+     * The screen reads the current WorkoutSession through
+     * getCurrentWorkoutSession(), so startGuidedWorkout() must have been
+     * called before navigating here. RoutineBuilderScreen already does this
+     * via startWorkout() → stateManager.startGuidedWorkout().
+     */
+    public void showGuidedWorkoutScreen() {
+        UserGuidedWorkout guidedWorkout = new UserGuidedWorkout(this);
+        guidedWorkout.show(primaryStage);
+    }
+    
     /*
      * Handles attempts to log in
      */

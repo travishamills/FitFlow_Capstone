@@ -273,31 +273,18 @@ private HBox ExercisePanelList(String exerciseName) {
 
 private ImageView ExerciseImage(String exerciseName) {
     switch (exerciseName) {
-
-        //comment for now till the offical image is decided
         case "Push-ups":
-           // return createIcon("/Images/pushup.png", 100);
-           return createIcon(IMAGES + "/snail1.jpg", 100);
-
+            return createIcon("/Images/pushup.png", 100);
         case "Plank":
-            //return createIcon("/Images/plank.png", 100);
-            return createIcon(IMAGES + "/snail2.jpg", 100);
-
+            return createIcon("/Images/pushup.png", 100);
         case "Sit-ups":
-            //return createIcon("/Images/situp.png", 100);
-            return createIcon(IMAGES + "/snail3.jpg", 100);
-
+            return createIcon("/Images/situp.png", 100);
         case "Squats":
-            //return createIcon("/Images/squat.png", 100);
-            return createIcon(IMAGES + "/snail4.jpg", 100);
-
+            return createIcon("/Images/squat.png", 100);
         case "Dumbbell Curls":
-            //return createIcon("/Images/biceps.png", 100);
-            return createIcon(IMAGES + "/snail5.jpg", 100);
-
+            return createIcon("/Images/dumbbell_curl.png", 100);
         default:
-            //return createIcon("/Images/default.png", 100);
-            return createIcon(IMAGES + "/snail.jpg", 100);
+            return createIcon("/Images/snail.jpg", 100);
     }
 }
 
@@ -503,43 +490,26 @@ private HBox BottomButtons(Stage stage) {
 }
 
 // Connects start exercise button to backend
-    private void startWorkout(Stage stage) {
-        // Collects the selected exercises before starting the guided workout.
-        List<String> selectedExercises = getSelectedExerciseNames();
+private void startWorkout(Stage stage) {
+    List<String> selectedExercises = getSelectedExerciseNames();
 
-        // Starts the backend guided workout timer with default exercise and rest times.
-        ServiceResponse<?> response = stateManager.startGuidedWorkout(
-                "Guided Workout",
-                selectedExercises,
-                60,
-                30
-        );
+    ServiceResponse<?> response = stateManager.startGuidedWorkout(
+            "Guided Workout",
+            selectedExercises,
+            60,
+            30
+    );
 
-        if (!response.isSuccess()) {
-            routineNameMessageLabel.setText(response.getMessage());
-            routineNameMessageLabel.setTextFill(Color.RED);
-            saveRoutineOverlay.setVisible(true);
-            return;
-        }
-
-        BorderPane guidedWorkout = new BorderPane();
-
-        Label title = new Label("Guided Workout Started");
-        title.setFont(Font.font("Arial", FontWeight.BOLD, 30));
-
-        Label subtitle = new Label("Timer backend is now running.");
-        subtitle.setFont(Font.font("Arial", FontWeight.NORMAL, 18));
-
-        VBox content = new VBox(20, title, subtitle);
-        content.setAlignment(Pos.CENTER);
-
-        guidedWorkout.setCenter(content);
-
-        Scene workoutScene = new Scene(guidedWorkout, 1280, 800);
-
-        stage.setScene(workoutScene);
+    if (!response.isSuccess()) {
+        routineNameMessageLabel.setText(response.getMessage());
+        routineNameMessageLabel.setTextFill(Color.RED);
+        saveRoutineOverlay.setVisible(true);
+        return;
     }
 
+    // Replace the inline scene with a proper navigation call
+    stateManager.showGuidedWorkoutScreen();
+}
 
 /*
  * Collects the exercises currently shown in the selected routine panel.

@@ -199,8 +199,6 @@ public abstract class BaseScreen {
         Button historyButton =
                 new Button("Workout History");
 
-        Button timerButton =
-                new Button("Interval Timer");
 
         Button logoutButton =
                 new Button("Log Out");
@@ -211,7 +209,6 @@ public abstract class BaseScreen {
         styleNavigationButton(profileButton);
         styleNavigationButton(builderButton);
         styleNavigationButton(historyButton);
-        styleNavigationButton(timerButton);
         styleNavigationButton(logoutButton);
         
         // change logout to red
@@ -233,11 +230,6 @@ public abstract class BaseScreen {
         historyButton.setOnAction(event ->
                 stateManager.showWorkoutHistoryScreen());
         
-        /*
-        timerButton.setOnAction(event ->
-                stateManager.showIntervalTimerScreen());
-        */
-
         logoutButton.setOnAction(event ->
                 stateManager.logOut()
         );
@@ -249,7 +241,6 @@ public abstract class BaseScreen {
                 profileButton,
                 builderButton,
                 historyButton,
-                timerButton,
                 new Separator(),
                 logoutButton
         );
