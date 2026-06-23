@@ -44,6 +44,20 @@ PASS - Repository-backed routine reload succeeds after facade restart
 PASS - CSV routine reload still includes Morning Starter
 PASS - CSV routine reload still includes selected exercise
 
+TC-RB-09 and guided workout regression: builder values are preserved
+PASS - Helper signin succeeds
+PASS - Helper signin returns session token
+Workout routine saved to CSV.
+Workout routine saved to CSV.
+PASS - Detailed routine save succeeds
+PASS - Detailed guided workout starts
+PASS - First exercise keeps edited sets
+PASS - First exercise keeps edited reps
+PASS - First exercise keeps edited rest
+PASS - Second exercise keeps edited sets
+PASS - Second exercise keeps edited reps
+PASS - Second exercise keeps edited rest
+
 TC-PROF-03, TC-PROF-04, profile save regression
 PASS - Helper signin succeeds
 PASS - Helper signin returns session token
@@ -87,5 +101,5 @@ PASS - Stored password value is not raw text
 
 
 === Final Test Summary ===
-Passed checks: 68
+Passed checks: 78
 Failed checks: 0
