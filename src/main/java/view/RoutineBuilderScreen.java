@@ -128,7 +128,7 @@ public class RoutineBuilderScreen extends BaseScreen {
 private VBox Header() {
 
     //page title
-    Label title = new Label("FITFLOW Routine Builder");
+    Label title = new Label("FITFLOW Workout Builder");  //modified
     //Set font style, weight and size of the text
     title.setFont(Font.font("Arial", FontWeight.BOLD, 40));
     //set text color to white
@@ -353,7 +353,7 @@ private HBox RoutinePanel(String exerciseName) {
     //Add components to the panel
     controls.getChildren().add(ComponentsControl("Sets", 3, selection));
     controls.getChildren().add(ComponentsControl("Reps", 10, selection));
-    controls.getChildren().add(ComponentsControl("Rest", 30, selection));
+    controls.getChildren().add(ComponentsControl("Rest (sec)", 30, selection));  //modified
 
     //Add to the panel
     content.getChildren().addAll(title, controls);
