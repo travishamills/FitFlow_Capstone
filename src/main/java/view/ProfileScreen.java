@@ -143,10 +143,10 @@ public class ProfileScreen extends BaseScreen {
         grid.add(new Label("Age:"), 0, 6);
         grid.add(ageField, 0, 7);
 
-        grid.add(new Label("Current Weight:"), 0, 8);
+        grid.add(new Label("Current Weight (lbs):"), 0, 8);
         grid.add(weightField, 0, 9);
 
-        grid.add(new Label("Height:"), 0, 10);
+        grid.add(new Label("Height (inches):"), 0, 10);
         grid.add(heightField, 0, 11);
 
         // BMI Section
