@@ -4,7 +4,7 @@
  * Course: CMSC 495
  * Project: FitFlow
  * Date: June 2026
- * Version: 1.1
+ * Version: 1.2
  *
  * Description:
  * This file saves and loads workout history data from workout_history.csv.
@@ -12,6 +12,7 @@
 
 package repository;
 
+import model.RoutineExerciseSelection;
 import model.WorkoutHistory;
 
 import java.io.FileWriter;
@@ -25,7 +26,7 @@ public class WorkoutHistoryRepository {
 
     private static final String DATA_FOLDER = "data";
     private static final String FILE_PATH = DATA_FOLDER + "/workout_history.csv";
-    private static final String HEADER = "historyId,userId,routineName,completedDate,duration,estimatedCalories";
+    private static final String HEADER = "historyId,userId,routineName,completedDate,duration,estimatedCalories,exerciseSelections";
 
     /*
      * Makes sure the data folder exists.
@@ -84,7 +85,7 @@ public class WorkoutHistoryRepository {
             List<String> lines = Files.readAllLines(Paths.get(FILE_PATH));
 
             for (String line : lines) {
-                if (line.trim().isEmpty() || line.equals(HEADER)) {
+                if (line.trim().isEmpty() || line.startsWith("historyId")) {
                     continue;
                 }
 
@@ -119,21 +120,34 @@ public class WorkoutHistoryRepository {
 
     /*
      * Turns one CSV line back into a WorkoutHistory object.
+     * The 7th column (exerciseSelections) is optional — rows written before
+     * this field was added will have only 6 columns and load with an empty
+     * selection list.
      */
     private WorkoutHistory parseWorkoutHistory(String line) {
         try {
-            String[] parts = line.split(",", -1);
+            // Limit to 7 so the serialized selections string (which contains
+            // commas in theory, though currently it uses colons) is kept whole.
+            // The current serialization uses no commas, so -1 is also safe,
+            // but 7 is explicit and protects against future format changes.
+            String[] parts = line.split(",", 7);
 
             if (parts.length < 6) {
                 return null;
             }
 
-            String historyId = parts[0];
-            String userId = parts[1];
-            String routineName = parts[2];
-            String completedDate = parts[3];
-            int duration = Integer.parseInt(parts[4]);
+            String historyId        = parts[0];
+            String userId           = parts[1];
+            String routineName      = parts[2];
+            String completedDate    = parts[3];
+            int duration            = Integer.parseInt(parts[4]);
             double estimatedCalories = Double.parseDouble(parts[5]);
+
+            // Parse selections from the optional 7th column
+            List<RoutineExerciseSelection> selections = new ArrayList<>();
+            if (parts.length >= 7 && !parts[6].trim().isEmpty()) {
+                selections = WorkoutHistory.parseSelections(parts[6].trim());
+            }
 
             return new WorkoutHistory(
                     historyId,
@@ -141,7 +155,8 @@ public class WorkoutHistoryRepository {
                     routineName,
                     completedDate,
                     duration,
-                    estimatedCalories
+                    estimatedCalories,
+                    selections
             );
         } catch (Exception e) {
             System.out.println("Error reading workout history line: " + e.getMessage());

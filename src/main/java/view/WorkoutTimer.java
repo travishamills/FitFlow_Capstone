@@ -1,10 +1,10 @@
 /*
  * File: WorkoutTimer.java
  * Original Author: Orange Snaer
- * Version: 6.4
+ * Version: 6.5
  * Adapted by: Alex Ronn
- * Updated by: David Lewis 
- * Date last edited: 6/22/2026
+ * Updated by: David Lewis
+ * Date last edited: 6/28/2026
  * File Purpose: Sets up timers for the guided workout screen so the user
  *      knows when to work and when to rest. Handles set transitions, rest
  *      periods, long breaks between exercises, and workout completion.
@@ -192,21 +192,19 @@ public class WorkoutTimer {
             return;
         }
 
-        // All exercises finished — show completion banner.
+        // All exercises finished — save history then show the congratulations
+        // screen. Duration and exercise count are calculated here from the
+        // same data the guided workout screen already has, so the stats card
+        // on CongratulationsScreen is accurate without a backend round-trip.
         workout.workoutRunning = false;
-        workout.playStopButton.setGraphic(workout.IconImage("/Icons/play.png"));
+        stopTimers();
 
-        workout.restLabel.setVisible(true);
-        workout.restLabel.setText("WORKOUT COMPLETE");
-
-        workout.restLabel.setBackground(new Background(new BackgroundFill(
-                Color.web("#4CAF50"), new CornerRadii(10), Insets.EMPTY)));
-        workout.restLabel.setPadding(new Insets(12, 25, 12, 25));
-        workout.restLabel.setTextFill(Color.WHITE);
-        workout.restLabel.setFont(Font.font("System", FontWeight.BOLD, 32));
-
-        // Persist the completed workout so WorkoutHistoryScreen can display it.
         workout.saveCompletedWorkoutToHistory();
+
+        int durationSeconds  = workout.calculatePlannedWorkoutDurationSeconds();
+        int exerciseCount    = workout.exercises.length;
+
+        workout.stateManager.showCongratulationsScreen(durationSeconds, exerciseCount);
     }
 
     // Called when a rest period finishes. Increments the set and restarts.
@@ -214,7 +212,6 @@ public class WorkoutTimer {
         workout.currentSet++;
         startWorkoutSet();
 
-        // Reset and restart ensures the timer display is clean for the new set.
         workout.timerManager.stopWorkout();
         workout.timerManager.reset();
         workout.timerManager.startWorkoutSet();

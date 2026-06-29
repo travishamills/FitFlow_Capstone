@@ -571,34 +571,46 @@ public class UserGuidedWorkout extends BaseScreen {
      * completion events from adding duplicates.
      */
     public void saveCompletedWorkoutToHistory() {
-        if (historySaved) {
-            return;
-        }
+       if (historySaved) {
+           return;
+       }
 
-        historySaved = true;
+       historySaved = true;
 
-        int durationSeconds = calculatePlannedWorkoutDurationSeconds();
-        String summary = buildWorkoutHistorySummary();
+       int durationSeconds = calculatePlannedWorkoutDurationSeconds();
+       String summary      = buildWorkoutHistorySummary();
 
-        ServiceResponse<Boolean> response =
-                stateManager.saveCompletedWorkout(summary, durationSeconds);
+       // Collect the current exercise selections so replay can restore them
+       List<RoutineExerciseSelection> selections = new ArrayList<>();
+       ServiceResponse<WorkoutSession> sessionResponse =
+               stateManager.getCurrentWorkoutSession();
+       if (sessionResponse.isSuccess() && sessionResponse.getData() != null) {
+           List<RoutineExerciseSelection> sessionSelections =
+                   sessionResponse.getData().getRoutineExercises();
+           if (sessionSelections != null) {
+               selections.addAll(sessionSelections);
+           }
+       }
 
-        if (statusLabel != null) {
-            if (response.isSuccess()) {
-                statusLabel.setText("Workout saved to history.");
-            } else {
-                statusLabel.setText("Workout complete, but history was not saved: "
-                        + response.getMessage());
-            }
-        }
-    }
+       ServiceResponse<Boolean> response =
+               stateManager.saveCompletedWorkout(summary, durationSeconds, selections);
+
+       if (statusLabel != null) {
+           if (response.isSuccess()) {
+               statusLabel.setText("Workout saved to history.");
+           } else {
+               statusLabel.setText("Workout complete, but history was not saved: "
+                       + response.getMessage());
+           }
+       }
+   }
 
     /*
      * Calculates the planned workout time displayed by the guided workout UI.
      * This includes each exercise set, short rests between sets, and long rests
      * between different exercises.
      */
-    private int calculatePlannedWorkoutDurationSeconds() {
+    protected int calculatePlannedWorkoutDurationSeconds() {
         int total = 0;
 
         for (int i = 0; i < exercises.length; i++) {

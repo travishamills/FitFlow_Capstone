@@ -3,10 +3,10 @@
  * Project: FitFlow - Interactive Workout Assistant
  * Course: UMGC CMSC 495
  * Phase: Phase II Source Code
- * Week: 6
- * Version: v0.6.3
+ * Week: 7
+ * Version: v0.7.0
  * Author: David Lewis
- * Last Updated: 2026-06-22
+ * Last Updated: 2026-06-28
  *
  * Purpose:
  * Provides a central integration point between frontend controllers and
@@ -17,12 +17,6 @@
  * ServiceResponse, ErrorMessages, ValidationUtil, UserProfile, WorkoutRoutine,
  * WorkoutHistory, ProfileRepository, WorkoutRoutineRepository,
  * WorkoutHistoryRepository, Java Standard Library.
- *
- * Update Notes:
- * Added repository-backed routine/history persistence and current-user
- * profile loading so screens no longer rely on memory-only data or hardcoded
- * profile records.
- *
  */
 package service;
 
@@ -41,6 +35,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -344,19 +339,53 @@ public class FitFlowFacade {
     }
 
     /**
-     * Saves updated profile data for the signed-in user.
+     * Loads the exercise rows for a named routine and converts them to
+     * RoutineExerciseSelection objects.
      *
-     * Accepts a UserProfile object from AppStateManager and saves it
-     * through the repository helper.
-     * The frontend should not write directly to CSV files or bypass the
-     * service layer. This method keeps profile persistence aligned with the
-     * project architecture.
-     * The method checks the session token, validates required profile
-     * fields, then asks CSVHelper to append the profile record to profiles.csv.
+     * The history screen Replay button supplies a routine name extracted from
+     * a history entry string. This method finds all WorkoutRoutine rows saved
+     * under that name for the current user and wraps each one so the builder
+     * screen can pre-populate its panel without touching repository classes.
+     *
+     * If the routine name is not found in the CSV, an empty list is returned;
+     * the builder screen handles that by opening normally with no pre-load.
      *
      * @param sessionToken Active session token.
-     * @param profileData Updated profile information from the profile screen.
-     * @return ServiceResponse confirming whether the profile save completed.
+     * @param routineName  Routine name to search for.
+     * @return ServiceResponse containing the exercise selection list.
+     */
+    public ServiceResponse<List<RoutineExerciseSelection>> getRoutineExercisesByName(
+            String sessionToken, String routineName) {
+
+        if (!isValidSession(sessionToken)) {
+            return ServiceResponse.error(ErrorMessages.SESSION_EXPIRED, ErrorMessages.CODE_SESSION);
+        }
+
+        if (ValidationUtil.isBlank(routineName)) {
+            return ServiceResponse.error(ErrorMessages.ROUTINE_NAME_REQUIRED, ErrorMessages.CODE_VALIDATION);
+        }
+
+        String userId = activeSessions.get(sessionToken);
+        List<WorkoutRoutine> userRoutines = workoutRoutineRepository.loadWorkoutRoutinesByUser(userId);
+        List<RoutineExerciseSelection> selections = new ArrayList<>();
+
+        for (WorkoutRoutine routine : userRoutines) {
+            if (routine.getRoutineName().equalsIgnoreCase(routineName.trim())) {
+                selections.add(new RoutineExerciseSelection(
+                        routine.getExerciseName(),
+                        routine.getSets(),
+                        routine.getReps(),
+                        routine.getDuration(),
+                        routine.getRestTime()
+                ));
+            }
+        }
+
+        return ServiceResponse.success("Routine exercises loaded.", selections);
+    }
+
+    /**
+     * Saves updated profile data for the signed-in user.
      */
     public ServiceResponse<Boolean> saveProfile(String sessionToken, UserProfile profileData) {
         if (!isValidSession(sessionToken)) {
@@ -436,14 +465,31 @@ public class FitFlowFacade {
     }
 
     /**
-     * Saves a completed workout history record for the active user.
+     * Saves a completed workout history record without exercise detail.
+     * Kept for backward compatibility with older call sites.
+     */
+    public ServiceResponse<Boolean> saveWorkoutHistory(String sessionToken,
+                                                       String workoutSummary,
+                                                       int durationSeconds) {
+        return saveWorkoutHistory(sessionToken, workoutSummary, durationSeconds, new ArrayList<>());
+    }
+
+    /**
+     * Saves a completed workout history record with full exercise selections.
      *
-     * @param sessionToken Active session token.
-     * @param workoutSummary Short summary of the completed workout.
-     * @param durationSeconds Total workout duration in seconds.
+     * The selections are serialized into the 7th CSV column so replay can
+     * reconstruct the exact exercise list without a separate repository lookup.
+     *
+     * @param sessionToken      Active session token.
+     * @param workoutSummary    Short summary for the history display string.
+     * @param durationSeconds   Total workout duration in seconds.
+     * @param selections        Exercise selections to persist with the record.
      * @return ServiceResponse confirming whether history was saved.
      */
-    public ServiceResponse<Boolean> saveWorkoutHistory(String sessionToken, String workoutSummary, int durationSeconds) {
+    public ServiceResponse<Boolean> saveWorkoutHistory(String sessionToken,
+                                                       String workoutSummary,
+                                                       int durationSeconds,
+                                                       List<RoutineExerciseSelection> selections) {
         if (!isValidSession(sessionToken)) {
             return ServiceResponse.error(ErrorMessages.SESSION_EXPIRED, ErrorMessages.CODE_SESSION);
         }
@@ -466,13 +512,15 @@ public class FitFlowFacade {
 
         String completedDate = LocalDateTime.now().toString();
         double estimatedCalories = (durationSeconds / 60.0) * 7.0;
+
         WorkoutHistory historyRecord = new WorkoutHistory(
                 "HISTORY-" + UUID.randomUUID().toString(),
                 userId,
                 workoutSummary.trim(),
                 completedDate,
                 durationSeconds,
-                estimatedCalories
+                estimatedCalories,
+                selections
         );
 
         workoutHistoryRepository.saveWorkoutHistory(historyRecord);
@@ -494,11 +542,6 @@ public class FitFlowFacade {
         String userId = activeSessions.get(sessionToken);
         List<String> history = new ArrayList<String>();
 
-        /*
-         * Load from the repository first so history survives beyond the current
-         * facade instance. In-memory history remains a short-term fallback for
-         * current-session display strings and older test paths.
-         */
         List<WorkoutHistory> savedHistoryRows = workoutHistoryRepository.loadWorkoutHistoryByUser(userId);
         for (WorkoutHistory savedHistory : savedHistoryRows) {
             history.add(savedHistory.getCompletedDate()
@@ -522,8 +565,33 @@ public class FitFlowFacade {
     }
 
     /**
-     * Calculates estimated calories burned using a simple Phase I formula.
+     * Loads workout history for the active user as WorkoutHistory objects.
      *
+     * Used by the history screen so each row can access the stored exercise
+     * selections directly for the Replay button, without a separate name lookup.
+     * In-memory entries (from the current session before the app restarts) do
+     * not carry selections; those rows return an empty selection list and replay
+     * will open the builder with default state.
+     *
+     * @param sessionToken Active session token.
+     * @return ServiceResponse containing the full WorkoutHistory list.
+     */
+    public ServiceResponse<List<WorkoutHistory>> getWorkoutHistoryObjects(String sessionToken) {
+        if (!isValidSession(sessionToken)) {
+            return ServiceResponse.error(ErrorMessages.SESSION_EXPIRED, ErrorMessages.CODE_SESSION);
+        }
+
+        String userId = activeSessions.get(sessionToken);
+        List<WorkoutHistory> history = workoutHistoryRepository.loadWorkoutHistoryByUser(userId);
+        
+        // reverse to show most recent first
+        Collections.reverse(history);
+
+        return ServiceResponse.success(ErrorMessages.SUCCESS_HISTORY_LOADED, history);
+    }
+
+    /**
+     * Calculates estimated calories burned using a simple Phase I formula.
      * @param sessionToken Active session token.
      * @param caloriesPerMinute Estimated calories burned per minute.
      * @param durationSeconds Exercise duration in seconds.

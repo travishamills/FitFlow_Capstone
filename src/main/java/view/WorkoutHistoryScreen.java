@@ -1,33 +1,49 @@
 /*
  * File: WorkoutHistoryScreen.java
- * Version: 0.6.3
- * Date last edited: 6/21/2026
+ * Version: 0.7.1
+ * Date last edited: 6/28/2026
  * Author: Alex Ronn
- * File Purpose: Creates the page to display a history
- * 		of workouts the user has completed.
+ * Update Notes:
+ *   - Formatted the date column from raw LocalDateTime string to
+ *     "MMM dd, yyyy  h:mm a" (e.g. "Jun 21, 2026  2:32 PM").
+ *   - Added a Replay button to each history row. Exercise selections stored
+ *     in the WorkoutHistory record are passed directly to the builder, so
+ *     no routine name lookup is needed.
  */
 package view;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import model.RoutineExerciseSelection;
+import model.WorkoutHistory;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 public class WorkoutHistoryScreen extends BaseScreen {
 
     private Scene scene;
+
+    // Formatter applied to dates parsed from history entry strings.
+    private static final DateTimeFormatter DISPLAY_FORMAT =
+            DateTimeFormatter.ofPattern("MMM dd, yyyy  h:mm a");
 
     public WorkoutHistoryScreen(AppStateManager stateManager) {
         super(stateManager);
@@ -38,7 +54,7 @@ public class WorkoutHistoryScreen extends BaseScreen {
 
         StackPane root = createRootLayout();
 
-        StackPane card = createCard(920, 650);
+        StackPane card = createCard(1000, 650);
 
         VBox content = createCardContent();
 
@@ -63,12 +79,12 @@ public class WorkoutHistoryScreen extends BaseScreen {
         VBox header = new VBox(5, logoPlaceholder, title, subtitle);
         header.setAlignment(Pos.CENTER);
 
-        // History list
+        // History list — loaded as WorkoutHistory objects so selections are available
 
         VBox historyList = new VBox(10);
         historyList.setPadding(new Insets(10));
 
-        List<String> entries = stateManager.getWorkoutHistory();
+        List<WorkoutHistory> entries = stateManager.getWorkoutHistoryObjects();
 
         if (entries == null || entries.isEmpty()) {
 
@@ -80,17 +96,17 @@ public class WorkoutHistoryScreen extends BaseScreen {
 
         } else {
 
-            for (String entry : entries) {
+            for (WorkoutHistory entry : entries) {
                 historyList.getChildren().add(buildHistoryRow(entry));
             }
         }
 
         ScrollPane scrollPane = new ScrollPane(historyList);
         scrollPane.setFitToWidth(true);
-        scrollPane.setPrefHeight(450);
+        scrollPane.setPrefHeight(480);
         scrollPane.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
 
-        // Assemble 
+        // Assemble
 
         content.getChildren().addAll(header, scrollPane);
 
@@ -102,14 +118,12 @@ public class WorkoutHistoryScreen extends BaseScreen {
     }
 
     /*
-     * Builds one row card for a single history entry string.
+     * Builds one row card for a single WorkoutHistory record.
      *
-     * FitFlowFacade formats history entries as:
-     *   completedDate | routineName | duration seconds | calories calories
-     * This method splits on " | " and lays the parts out in a labeled row
-     * so the screen shows structured data rather than a raw string.
+     * Uses the WorkoutHistory object directly so the Replay button has access
+     * to the stored exercise selections without a secondary lookup.
      */
-    private HBox buildHistoryRow(String entry) {
+    private HBox buildHistoryRow(WorkoutHistory entry) {
 
         HBox row = new HBox(20);
         row.setAlignment(Pos.CENTER_LEFT);
@@ -121,29 +135,66 @@ public class WorkoutHistoryScreen extends BaseScreen {
                 Insets.EMPTY
         )));
 
-        String[] parts = entry.split(" \\| ");
+        String displayDate = formatDate(entry.getCompletedDate());
+        String routine     = entry.getRoutineName();
+        String duration    = entry.getDuration() + " seconds";
+        String calories    = entry.getEstimatedCalories() + " calories";
 
-        // If the string format ever changes, show it raw
-        if (parts.length < 4) {
-            Label raw = new Label(entry);
-            raw.setFont(Font.font("Segoe UI", 13));
-            row.getChildren().add(raw);
-            return row;
-        }
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        String date     = parts[0].trim();
-        String routine  = parts[1].trim();
-        String duration = parts[2].trim();
-        String calories = parts[3].trim();
+        Button replayButton = buildReplayButton(entry.getExerciseSelections());
 
         row.getChildren().addAll(
-                buildField("Date",     date,     220),
-                buildField("Routine",  routine,  220),
-                buildField("Duration", duration, 160),
-                buildField("Calories", calories, 100)
+                buildField("Date",     displayDate, 230),
+                buildField("Routine",  routine,     220),
+                buildField("Duration", duration,    160),
+                buildField("Calories", calories,    120),
+                spacer,
+                replayButton
         );
 
         return row;
+    }
+
+    /*
+     * Parses the raw LocalDateTime string stored in the history CSV and
+     * returns a human-readable formatted string.
+     * Falls back to the raw string if parsing fails (e.g. older format rows).
+     */
+    private String formatDate(String raw) {
+        try {
+            LocalDateTime dt = LocalDateTime.parse(raw);
+            return dt.format(DISPLAY_FORMAT);
+        } catch (DateTimeParseException e) {
+            return raw;
+        }
+    }
+
+    /*
+     * Builds the Replay button for a history row.
+     *
+     * Passes the stored exercise selections directly to AppStateManager so
+     * the builder opens pre-populated. If the selections list is empty
+     * (e.g. a row saved before this feature was added), the builder opens
+     * normally with no exercises pre-loaded.
+     */
+    private Button buildReplayButton(List<RoutineExerciseSelection> selections) {
+
+        Button btn = new Button("▶");
+        btn.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
+        btn.setStyle("""
+            -fx-background-color: white;
+            -fx-text-fill: #1E5AA8;
+            -fx-background-radius: 8;
+            -fx-cursor: hand;
+            -fx-padding: 6 14 6 14;
+            """);
+
+        btn.setOnAction(event ->
+                stateManager.showRoutineBuilderScreen(selections));
+
+        return btn;
     }
 
     /*

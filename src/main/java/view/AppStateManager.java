@@ -1,16 +1,10 @@
 /*
  * File: AppStateManager.java
- * Version: 0.6.4
- * Date last edited: 6/22/2026
+ * Version: 0.7.0
+ * Date last edited: 6/28/2026
  * Author: Alex Ronn
  * Modified by: David Lewis
  * File Purpose: Manages swapping between different pages in the application.
- * Update Notes: Added routine-save routing and profile-save routing so JavaFX
- * screens send save requests through AppStateManager before reaching
- * FitFlowFacade. This keeps the view layer separate from the service layer and
- * matches the team UML flow. Updated profile loading so the profile screen now
- * asks FitFlowFacade for the signed-in user's profile instead of creating a
- * hardcoded John Smith test profile.
  */
 
 package view;
@@ -20,6 +14,7 @@ import java.util.List;
 import javafx.stage.Stage;
 import model.RoutineExerciseSelection;
 import model.UserProfile;
+import model.WorkoutHistory;
 import model.WorkoutSession;
 import service.*;
 
@@ -27,7 +22,7 @@ public class AppStateManager {
 
     private final Stage primaryStage;
     private LoginScreen loginScreen;
-    private SignupScreen signupScreen; 
+    private SignupScreen signupScreen;
     private ProfileScreen profileScreen;
     private FitFlowFacade facade;
     private String sessionToken;
@@ -46,14 +41,12 @@ public class AppStateManager {
      */
     public void showLoginScreen() {
 
-    	if (loginScreen == null)
-    		loginScreen = new LoginScreen(this);
-    	else
-    		loginScreen.clearPassword();
+        if (loginScreen == null)
+            loginScreen = new LoginScreen(this);
+        else
+            loginScreen.clearPassword();
 
-        primaryStage.setScene(
-                loginScreen.getScene()
-        );
+        primaryStage.setScene(loginScreen.getScene());
     }
 
     /**
@@ -61,58 +54,58 @@ public class AppStateManager {
      */
     public void showSignupScreen() {
 
-    	if (signupScreen == null)
-    		signupScreen = new SignupScreen(this);
-    	else
-    		signupScreen.clearPasswords();
+        if (signupScreen == null)
+            signupScreen = new SignupScreen(this);
+        else
+            signupScreen.clearPasswords();
 
-        primaryStage.setScene(
-                signupScreen.getScene()
-        );
+        primaryStage.setScene(signupScreen.getScene());
     }
-    
+
     /**
      * Shows the Dashboard screen.
      */
     public void showDashboardScreen() {
 
-    	DashboardScreen dashboardScreen =
-                new DashboardScreen(this);
-
-        primaryStage.setScene(
-        		dashboardScreen.getScene()
-        );
+        DashboardScreen dashboardScreen = new DashboardScreen(this);
+        primaryStage.setScene(dashboardScreen.getScene());
     }
-    
+
     /**
-     * Shows the routine builder screen.
+     * Shows the routine builder screen with no pre-loaded exercises.
      */
     public void showRoutineBuilderScreen() {
 
-    	RoutineBuilderScreen routineBuilderScreen =
-                new RoutineBuilderScreen(this);
-
-    	routineBuilderScreen.show(primaryStage);
+        RoutineBuilderScreen routineBuilderScreen = new RoutineBuilderScreen(this);
+        routineBuilderScreen.show(primaryStage);
     }
-    
+
+    /**
+     * Shows the routine builder screen pre-populated with a prior workout's
+     * exercises. Called by the Replay button on the workout history screen.
+     *
+     * @param preloadedExercises Exercise selections to load into the builder.
+     */
+    public void showRoutineBuilderScreen(List<RoutineExerciseSelection> preloadedExercises) {
+
+        RoutineBuilderScreen routineBuilderScreen = new RoutineBuilderScreen(this);
+        routineBuilderScreen.show(primaryStage, preloadedExercises);
+    }
+
     /**
      * Shows the workout history screen.
      */
     public void showWorkoutHistoryScreen() {
+
         WorkoutHistoryScreen historyScreen = new WorkoutHistoryScreen(this);
         primaryStage.setScene(historyScreen.getScene());
     }
-    
+
     /**
      * Shows the profile screen for the signed-in user.
-     *
-     * The older Phase I version created a hardcoded John Smith profile just to
-     * prove the screen could open. That was useful for early UI testing, but it
-     * did not match the real login flow. This version asks FitFlowFacade for the
-     * profile tied to the current session token, then builds the screen from
-     * that returned UserProfile object.
      */
     public void showProfileScreen() {
+
         ServiceResponse<UserProfile> profileLoad = facade.getCurrentUserProfile(sessionToken);
 
         if (profileLoad.isSuccess()) {
@@ -123,123 +116,151 @@ public class AppStateManager {
             return;
         }
 
-        primaryStage.setScene(
-        		profileScreen.getScene()
-        );
+        primaryStage.setScene(profileScreen.getScene());
     }
-    
+
     /**
      * Shows the guided workout screen for the active session.
-     *
-     * The screen reads the current WorkoutSession through
-     * getCurrentWorkoutSession(), so startGuidedWorkout() must have been
-     * called before navigating here. RoutineBuilderScreen already does this
-     * via startWorkout() → stateManager.startGuidedWorkout().
      */
     public void showGuidedWorkoutScreen() {
+
         UserGuidedWorkout guidedWorkout = new UserGuidedWorkout(this);
         guidedWorkout.show(primaryStage);
     }
-    
-    /*
-     * Handles attempts to log in
-     */
-    public void signInAttempt(String username, String password) {
-    	ServiceResponse<String> attempt = facade.signIn(username, password);
-    	if (attempt.isSuccess()) {
-    		sessionToken = attempt.getData();
-    		showDashboardScreen();
-    	} else {
-    		String reason = attempt.getMessage();
-    		loginScreen.showError(reason);
-    	}
-    }
-    
-    /*
-     * Handles logging out
-     */
-    public void logOut() {
-    	ServiceResponse<Boolean> attempt = facade.logout(sessionToken);
-    	if (attempt.isSuccess()) {
-    		loginScreen.showSuccess(attempt.getMessage());
-    		showLoginScreen();
-    	} else {
-    		loginScreen.showError(attempt.getMessage());
-    		showLoginScreen();
-    	}
-    }
-    
-    /*
-     * Handles attempts to sign up
-     */
-    public void signUpAttempt(String username, String password, String email) {
-    	ServiceResponse<String> attempt = facade.signUp(username, password, email);
-    	if (attempt.isSuccess()) {
-    		showLoginScreen();
-    		loginScreen.showSuccess(attempt.getMessage());
-    		loginScreen.fillUsername(username);
-    	} else {
-    		String reason = attempt.getMessage();
-    		signupScreen.showError(reason);
-    	}
-    }
-    
-    /*
-     * Gets the exercise names that should be displayed in the routine builder.
+
+    /**
+     * Shows the congratulations screen after a guided workout completes.
      *
-     * Requests the exercise list from FitFlowFacade.
-     * Keeps the JavaFX screen from building its own workout data.
-     * Sends the current session token to the service layer and returns
-     * only the list data when the request succeeds.
-     */
-    public List<String> getExercises() {
-    	ServiceResponse<List<String>> attempt = facade.getWorkouts(sessionToken);
-    	if (attempt.isSuccess()) {
-    		return attempt.getData();
-    	}
-    	return List.of();
-    }
-    
-    /*
-     * Gets the list of the names of workouts that have been completed.
+     * Called by WorkoutTimer.setDone() once the final exercise finishes. The
+     * guided workout UI calculates the planned duration and passes it here so
+     * the screen can display accurate stats without querying the backend.
      *
-     * Requests the workout list from FitFlowFacade.
-     * Sends the current session token to the service layer and returns
-     * only the list data when the request succeeds.
+     * @param durationSeconds  Total planned workout duration in seconds.
+     * @param exerciseCount    Number of exercises in the completed session.
      */
-    public List<String> getWorkoutHistory() {
-        ServiceResponse<List<String>> attempt = facade.getWorkoutHistory(sessionToken);
+    public void showCongratulationsScreen(int durationSeconds, int exerciseCount) {
+
+        CongratulationsScreen congratsScreen =
+                new CongratulationsScreen(this, durationSeconds, exerciseCount);
+
+        primaryStage.setScene(congratsScreen.getScene());
+    }
+
+    /**
+     * Loads saved exercise rows for a named routine from the repository.
+     *
+     * Used by the history screen Replay button. The facade loads all routines
+     * saved for the current user and filters to the given name, converting each
+     * WorkoutRoutine repository row into a RoutineExerciseSelection so the
+     * builder screen can pre-populate its right panel.
+     *
+     * @param routineName The routine name to look up.
+     * @return List of exercise selections for that routine, or empty list.
+     */
+    public List<RoutineExerciseSelection> getRoutineExercisesByName(String routineName) {
+
+        ServiceResponse<List<RoutineExerciseSelection>> attempt =
+                facade.getRoutineExercisesByName(sessionToken, routineName);
+
         if (attempt.isSuccess()) {
             return attempt.getData();
         }
+
         return List.of();
     }
-    
-    /*
-     * Sends a routine save request from the UI to the service facade.
-     *
-     * Receives a routine name and selected exercise names from the
-     * routine builder screen.
-     * The view package should not call FitFlowFacade directly.
-     * AppStateManager passes the current session token and routine data
-     * to FitFlowFacade.saveWorkout, then returns the ServiceResponse so the
-     * screen can display the real success or error message.
-     */
-    public ServiceResponse<Boolean> saveRoutine(String routineName, List<String> exerciseNames) {
-        return facade.saveWorkout(sessionToken, routineName, exerciseNames);
-    }
-
 
     /*
-     * Saves a routine with the user's selected sets, reps, duration, and rest.
-     * RoutineBuilderScreen calls this detailed path when the user changes the
-     * builder controls so those values are not lost before repository saving.
+     * Handles attempts to log in.
      */
-    public ServiceResponse<Boolean> saveRoutineWithDetails(String routineName,
-                                                           List<RoutineExerciseSelection> selectedExercises) {
-        return facade.saveWorkoutWithDetails(sessionToken, routineName, selectedExercises);
+    public void signInAttempt(String username, String password) {
+
+        ServiceResponse<String> attempt = facade.signIn(username, password);
+
+        if (attempt.isSuccess()) {
+            sessionToken = attempt.getData();
+            showDashboardScreen();
+        } else {
+            loginScreen.showError(attempt.getMessage());
+        }
     }
-    
+
+    /*
+     * Handles logging out.
+     */
+    public void logOut() {
+
+        ServiceResponse<Boolean> attempt = facade.logout(sessionToken);
+
+        if (attempt.isSuccess()) {
+            loginScreen.showSuccess(attempt.getMessage());
+            showLoginScreen();
+        } else {
+            loginScreen.showError(attempt.getMessage());
+            showLoginScreen();
+        }
+    }
+
+    /*
+     * Handles attempts to sign up.
+     */
+    public void signUpAttempt(String username, String password, String email) {
+
+        ServiceResponse<String> attempt = facade.signUp(username, password, email);
+
+        if (attempt.isSuccess()) {
+            showLoginScreen();
+            loginScreen.showSuccess(attempt.getMessage());
+            loginScreen.fillUsername(username);
+        } else {
+            signupScreen.showError(attempt.getMessage());
+        }
+    }
+
+    /*
+     * Gets the exercise names to display in the routine builder.
+     */
+    public List<String> getExercises() {
+
+        ServiceResponse<List<String>> attempt = facade.getWorkouts(sessionToken);
+
+        if (attempt.isSuccess()) {
+            return attempt.getData();
+        }
+
+        return List.of();
+    }
+
+    /*
+     * Gets the list of completed workout history entries as display strings.
+     */
+    public List<String> getWorkoutHistory() {
+
+        ServiceResponse<List<String>> attempt = facade.getWorkoutHistory(sessionToken);
+
+        if (attempt.isSuccess()) {
+            return attempt.getData();
+        }
+
+        return List.of();
+    }
+
+    /*
+     * Gets the full WorkoutHistory objects for the current user.
+     * Used by WorkoutHistoryScreen so each row can access exercise selections
+     * for the Replay button directly from the history record.
+     */
+    public List<WorkoutHistory> getWorkoutHistoryObjects() {
+
+        ServiceResponse<List<WorkoutHistory>> attempt =
+                facade.getWorkoutHistoryObjects(sessionToken);
+
+        if (attempt.isSuccess()) {
+            return attempt.getData();
+        }
+
+        return List.of();
+    }
+
     /*
      * Sends a profile save request from the UI to the service facade.
      *
@@ -259,8 +280,6 @@ public class AppStateManager {
                                                               List<String> exercises,
                                                               int exerciseDuration,
                                                               int restDuration) {
-
-        // Sends workout start request to the backend timer service.
         return facade.startGuidedWorkout(
                 sessionToken,
                 routineName,
@@ -270,14 +289,13 @@ public class AppStateManager {
         );
     }
 
-
     /*
      * Starts a guided workout with the detailed values from Routine Builder.
-     * This is the path used by the Start Exercise button after the user changes
-     * sets, reps, or rest values in the builder UI.
      */
-    public ServiceResponse<WorkoutSession> startGuidedWorkoutWithDetails(String routineName,
-                                                                         List<RoutineExerciseSelection> selectedExercises) {
+    public ServiceResponse<WorkoutSession> startGuidedWorkoutWithDetails(
+            String routineName,
+            List<RoutineExerciseSelection> selectedExercises) {
+
         return facade.startGuidedWorkoutWithDetails(
                 sessionToken,
                 routineName,
@@ -313,21 +331,21 @@ public class AppStateManager {
         return facade.skipGuidedWorkoutStep(sessionToken);
     }
 
-    //Timer Tick
+    // Timer Tick
     public ServiceResponse<WorkoutSession> tickGuidedWorkout() {
 
         // Updates the timer by one second.
         return facade.tickGuidedWorkout(sessionToken);
     }
 
-    //Current Session
+    // Current Session
     public ServiceResponse<WorkoutSession> getCurrentWorkoutSession() {
 
         // Returns the current guided workout state.
         return facade.getCurrentWorkoutSession(sessionToken);
     }
 
-    //Save Completed Workout
+    // Save Completed Workout
     public ServiceResponse<Boolean> saveCompletedWorkout() {
 
         // Saves completed guided workout to workout history.
@@ -345,5 +363,19 @@ public class AppStateManager {
      */
     public ServiceResponse<Boolean> saveCompletedWorkout(String workoutSummary, int durationSeconds) {
         return facade.saveWorkoutHistory(sessionToken, workoutSummary, durationSeconds);
+    }
+
+    /*
+     * Saves a completed guided workout with the full exercise selection list.
+     * Used by UserGuidedWorkout so replay can restore exact exercise settings.
+     *
+     * @param workoutSummary  Short display summary for the history row.
+     * @param durationSeconds Total planned workout duration in seconds.
+     * @param selections      Exercise selections from the active workout session.
+     */
+    public ServiceResponse<Boolean> saveCompletedWorkout(String workoutSummary,
+                                                         int durationSeconds,
+                                                         List<RoutineExerciseSelection> selections) {
+        return facade.saveWorkoutHistory(sessionToken, workoutSummary, durationSeconds, selections);
     }
 }
